@@ -1,0 +1,13 @@
+[package]
+name = "backend"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+axum = "0.7"
+tokio = { version = "1.38", features = ["full"] }
+serde = { workspace = true, features = ["derive"] }
+engine = { path = "../crates/engine" }
+parser = { path = "../crates/parser" }
+search = { path = "../crates/search" }
+storage = { path = "../crates/storage" }

@@ -1,0 +1,15 @@
+# Node modules and build output
+node_modules
+dist
+build
+
+# Git and editor files
+.git
+.gitignore
+*.swp
+*.swo
+*.DS_Store
+
+# IDE/workspace files
+.vscode
+.idea
