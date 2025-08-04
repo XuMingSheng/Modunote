@@ -8,12 +8,12 @@ export function Workplace() {
   const activeBlock = openBlocks.find((b) => b.id === activeBlockId) || null;
 
   return (
-    <div className="flex h-full">
+    <div className="flex h-screen">
       {/* Sidebar for open blocks */}
       <OpenBlocksSidebar />
 
       {/* Center editor */}
-      <div className="flex-1 p-4 bg-white">
+      <div className="flex-1 p-4 bg-white border-l border-gray-300 h-screen">
         {activeBlock ? (
           <BlockEditor block={activeBlock} />
         ) : (

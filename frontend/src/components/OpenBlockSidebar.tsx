@@ -48,27 +48,31 @@ export function OpenBlocksSidebar() {
             >
               {expanded ? (
                 <>
-                  <span className="truncate">{block.title}</span>
-                  <button
-                    className="ml-2 text-red-500 hover:text-red-700"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      closeBlock(block.id);
-                    }}
-                    aria-label={`Close block ${block.title}`}
-                  >
-                    <X className="w-4 h-4" />
-                  </button>
-                  <button
-                    className="text-red-700 hover:text-red-900"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDelete(block.id, block.title);
-                    }}
-                    aria-label={`Delete block ${block.title}`}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center flex-1 min-w-0">
+                    <span className="truncate">{block.title}</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button
+                      className="ml-2 text-red-500 hover:text-red-700"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        closeBlock(block.id);
+                      }}
+                      aria-label={`Close block ${block.title}`}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                    <button
+                      className="text-red-700 hover:text-red-900"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDelete(block.id, block.title);
+                      }}
+                      aria-label={`Delete block ${block.title}`}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </>
               ) : (
                 <span className="truncate">{block.title[0]}</span>

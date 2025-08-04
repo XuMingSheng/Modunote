@@ -1,22 +1,63 @@
-import { useState, useEffect } from "react";
+import { type FC, useState, useEffect } from "react";
+import { Editor, rootCtx, defaultValueCtx } from "@milkdown/kit/core";
+import { commonmark } from "@milkdown/kit/preset/commonmark";
+import { listener, listenerCtx } from "@milkdown/kit/plugin/listener";
+import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
+import { Crepe } from "@milkdown/crepe";
+
 import { useAutoSave } from "@/hooks/useAutoSave";
 import { MarkdownRenderer } from "@/components/MarkdownRenderer";
 import { type Block, useBlocks } from "@/context/BlocksContext";
+
+// import "@milkdown/theme-nord/style.css";
+import "@milkdown/crepe/theme/common/style.css";
+import "@milkdown/crepe/theme/frame.css";
 
 interface Props {
   block: Block;
 }
 
+interface CrepeEditorProps {
+  blockId: string;
+  initialContent: string;
+  onUpdate: (content: string) => void;
+}
+
+const CrepeEditor: FC<CrepeEditorProps> = ({
+  blockId,
+  initialContent,
+  onUpdate,
+}: CrepeEditorProps) => {
+  useEditor(
+    (root) => {
+      const crepe = new Crepe({
+        root,
+        defaultValue: initialContent,
+      });
+
+      crepe.on((api) => {
+        api.markdownUpdated((ctx, markdown, prevMarkdown) => {
+          onUpdate(markdown);
+        });
+      });
+
+      return crepe;
+    },
+    [blockId, initialContent]
+  );
+
+  return <Milkdown />;
+};
+
 export function BlockEditor({ block }: Props) {
   const { updateBlock } = useBlocks();
   const [title, setTitle] = useState(block.title);
   const [content, setContent] = useState(block.content);
-  const [isEditing, setIsEditing] = useState(false);
+  //   const [isEditing, setIsEditing] = useState(false);
 
   // Reset state when block changes
   useEffect(() => {
     setTitle(block.title);
-    setContent(block.content);
   }, [block.id]);
 
   // Triggers autosave whenever content changes
@@ -58,25 +99,15 @@ export function BlockEditor({ block }: Props) {
       </div>
 
       {/* Content Section */}
-      <div className="flex-1 overflow-auto p-4">
-        {isEditing ? (
-          <textarea
-            value={content}
-            onChange={(e) => {
-              setContent(e.target.value);
-            }}
-            onBlur={() => setIsEditing(false)}
-            className="w-full h-full font-mono p-2 resize-none"
-            placeholder="Start writing..."
+      <div className="text-xs text-gray-400 overflow-y-auto">
+        <MilkdownProvider>
+          {/* <MilkdownEditor block={block} /> */}
+          <CrepeEditor
+            blockId={block.id}
+            initialContent={block.content}
+            onUpdate={(markdown) => setContent(markdown)}
           />
-        ) : (
-          <div
-            onClick={() => setIsEditing(true)}
-            className="cursor-text h-full overflow-auto"
-          >
-            <MarkdownRenderer markdown={content} />
-          </div>
-        )}
+        </MilkdownProvider>
       </div>
     </div>
   );
