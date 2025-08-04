@@ -1,26 +1,22 @@
 import { type FC, useState, useEffect } from "react";
-import { Editor, rootCtx, defaultValueCtx } from "@milkdown/kit/core";
-import { commonmark } from "@milkdown/kit/preset/commonmark";
-import { listener, listenerCtx } from "@milkdown/kit/plugin/listener";
 import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
 import { Crepe } from "@milkdown/crepe";
 
 import { useAutoSave } from "@/hooks/useAutoSave";
-import { MarkdownRenderer } from "@/components/MarkdownRenderer";
-import { type Block, useBlocks } from "@/context/BlocksContext";
+import { type Block } from "@/api/blockApi";
+import { useBlocks } from "@/context/BlocksContext";
 
-// import "@milkdown/theme-nord/style.css";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
-
-interface Props {
-  block: Block;
-}
 
 interface CrepeEditorProps {
   blockId: string;
   initialContent: string;
   onUpdate: (content: string) => void;
+}
+
+interface BlockEditorProps {
+  block: Block;
 }
 
 const CrepeEditor: FC<CrepeEditorProps> = ({
@@ -49,15 +45,15 @@ const CrepeEditor: FC<CrepeEditorProps> = ({
   return <Milkdown />;
 };
 
-export function BlockEditor({ block }: Props) {
+export const BlockEditor: FC<BlockEditorProps> = ({ block }) => {
   const { updateBlock } = useBlocks();
   const [title, setTitle] = useState(block.title);
   const [content, setContent] = useState(block.content);
-  //   const [isEditing, setIsEditing] = useState(false);
 
   // Reset state when block changes
   useEffect(() => {
     setTitle(block.title);
+    setContent(block.content);
   }, [block.id]);
 
   // Triggers autosave whenever content changes
@@ -99,7 +95,7 @@ export function BlockEditor({ block }: Props) {
       </div>
 
       {/* Content Section */}
-      <div className="text-xs text-gray-400 overflow-y-auto">
+      <div className="text-xs text-gray-400 min-h-full overflow-y-auto">
         <MilkdownProvider>
           {/* <MilkdownEditor block={block} /> */}
           <CrepeEditor
@@ -111,4 +107,4 @@ export function BlockEditor({ block }: Props) {
       </div>
     </div>
   );
-}
+};

@@ -1,11 +1,53 @@
-import { type Block } from "@/context/BlocksContext";
 import { ApiError } from "./errors";
 
+export interface Block {
+  id: string;
+  title: string;
+  content: string;
+
+  parentBlocks: BlockLink[];
+  childBlocks: BlockLink[];
+  relatedBlocks: BlockLink[];
+}
+
+export interface BlockLink {
+  id: string;
+  title: string;
+}
+
 let blocksDb: Block[] = [
-  { id: "b1", title: "Block One", content: "Content 1" },
-  { id: "b2", title: "Block Two", content: "Content 2" },
-  { id: "b3", title: "Block Three", content: "Content 3" },
-  { id: "b4", title: "Block Four", content: "Content 4" },
+  {
+    id: "b1",
+    title: "Block One",
+    content: "Content 1",
+    parentBlocks: [{ id: "b2", title: "Block Two" }],
+    childBlocks: [{ id: "b3", title: "Block Three" }],
+    relatedBlocks: [{ id: "b4", title: "Block Four" }],
+  },
+  {
+    id: "b2",
+    title: "Block Two",
+    content: "Content 2",
+    parentBlocks: [],
+    childBlocks: [{ id: "b1", title: "Block One" }],
+    relatedBlocks: [],
+  },
+  {
+    id: "b3",
+    title: "Block Three",
+    content: "Content 3",
+    parentBlocks: [{ id: "b1", title: "Block One" }],
+    childBlocks: [],
+    relatedBlocks: [],
+  },
+  {
+    id: "b4",
+    title: "Block Four",
+    content: "Content 4",
+    parentBlocks: [],
+    childBlocks: [],
+    relatedBlocks: [{ id: "b1", title: "Block One" }],
+  },
 ];
 
 let openBlockIds = new Set<string>(["b1", "b2"]);
@@ -52,6 +94,9 @@ export const blockApi = {
       id: `b${Date.now()}`,
       title: request.title,
       content: request.content ?? "",
+      parentBlocks: [],
+      childBlocks: [],
+      relatedBlocks: [],
     };
     blocksDb.push(newBlock);
     openBlockIds.add(newBlock.id);

@@ -1,20 +1,13 @@
 import { useEffect } from "react";
-import { blockApi, type BlockUpdateRequest } from "../api/blockApi";
+import { blockApi, type Block, type BlockUpdateRequest } from "../api/blockApi";
 import { createContext, useContext, useState, type ReactNode } from "react";
-
-export interface Block {
-  id: string;
-  title: string;
-  content: string;
-}
-
-export type BlockSaveStatus = "idle" | "saving" | "saved" | "error";
-
 export interface BlocksContextType {
   openBlocks: Block[];
   activeBlockId: string | null;
+
   setOpenBlocks: (blocks: Block[]) => void;
   setActiveBlockId: (id: string | null) => void;
+  getActiveBlock: () => Block | null;
   createNewBlock: () => void;
   openBlock: (id: string) => void;
   closeBlock: (id: string) => void;
@@ -37,6 +30,10 @@ export function BlocksProvider({ children }: { children: ReactNode }) {
     };
     fetchOpenBlocks();
   }, []);
+
+  function getActiveBlock() {
+    return openBlocks.find((b) => b.id === activeBlockId) || null;
+  }
 
   async function createNewBlock() {
     const newBlock = await blockApi.create({
@@ -87,6 +84,7 @@ export function BlocksProvider({ children }: { children: ReactNode }) {
       value={{
         openBlocks,
         activeBlockId,
+        getActiveBlock,
         setOpenBlocks,
         setActiveBlockId,
         createNewBlock,

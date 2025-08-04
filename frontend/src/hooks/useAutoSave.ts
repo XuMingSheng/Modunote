@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
-import { type BlockSaveStatus, type Block } from "@/context/BlocksContext";
 import { useBlocks } from "@/context/BlocksContext";
 
-const AUTO_SAVE_INTERVAL = 2000;
+const AUTO_SAVE_INTERVAL = 1500;
+
+export type BlockSaveStatus = "idle" | "saving" | "saved" | "error";
 
 interface Props {
   blockId: string;

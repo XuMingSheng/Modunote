@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { useBlocks, type Block } from "../context/BlocksContext";
-import { blockApi } from "../api/blockApi";
+import { useBlocks } from "../context/BlocksContext";
+import { blockApi, type Block } from "../api/blockApi";
 
 export function BlockSearchModal({
   isOpen,
