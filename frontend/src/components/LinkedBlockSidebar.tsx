@@ -1,5 +1,5 @@
 import { type FC, useState, useEffect, useRef } from "react";
-import { ChevronLeft, LucidePanelRightInactive } from "lucide-react";
+import { ChevronLeft } from "lucide-react";
 import { type Block } from "@/api/blockApi";
 import { LinkedBlockSection } from "./LinkedBlockSection";
 import { BlockPreviewTooltip } from "./BlockPreviewTooltip";
@@ -14,7 +14,7 @@ export const LinkedBlockSidebar: FC<LinkedBlockSidebarProps> = ({ block }) => {
   const [previewHovered, setPreviewHovered] = useState(false);
   const [previewBlockId, setPreviewBlockId] = useState<string | null>(null);
   const [hoveredBlockId, setHoveredBlockId] = useState<string | null>(null);
-  const previewHoverTimeout = useRef<number>(0);
+  const previewHoverTimeout = useRef<number | null>(null);
 
   useEffect(() => {
     setPreviewBlockId(null);
@@ -39,8 +39,13 @@ export const LinkedBlockSidebar: FC<LinkedBlockSidebarProps> = ({ block }) => {
       // Use a short timeout so that moving mouse from row to tooltip doesn’t flicker
       previewHoverTimeout.current = setTimeout(() => {
         setPreviewBlockId(null);
-      }, 1000);
-      return () => clearTimeout(previewHoverTimeout.current);
+      }, 500);
+
+      return () => {
+        if (previewHoverTimeout.current) {
+          clearTimeout(previewHoverTimeout.current);
+        }
+      };
     }
   }, [hoveredBlockId, previewHovered]);
 
