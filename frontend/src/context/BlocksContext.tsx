@@ -7,8 +7,9 @@ export interface BlocksContextType {
 
   setOpenBlocks: (blocks: Block[]) => void;
   setActiveBlockId: (id: string | null) => void;
+
   getActiveBlock: () => Block | null;
-  createNewBlock: () => void;
+  createNewBlock: () => Promise<Block>;
   openBlock: (id: string) => void;
   closeBlock: (id: string) => void;
   updateBlock: (id: string, request: BlockUpdateRequest) => void;
@@ -35,14 +36,6 @@ export function BlocksProvider({ children }: { children: ReactNode }) {
     return openBlocks.find((b) => b.id === activeBlockId) || null;
   }
 
-  async function createNewBlock() {
-    const newBlock = await blockApi.create({
-      title: `New Block ${Date.now()}`,
-    });
-    setOpenBlocks([...openBlocks, newBlock]);
-    setActiveBlockId(newBlock.id);
-  }
-
   async function openBlock(id: string) {
     if (openBlocks.find((b) => b.id === id)) {
       setActiveBlockId(id);
@@ -58,11 +51,6 @@ export function BlocksProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function updateBlock(id: string, request: BlockUpdateRequest) {
-    const block = await blockApi.update(id, request);
-    setOpenBlocks((prev) => prev.map((b) => (b.id === id ? block : b)));
-  }
-
   async function closeBlock(id: string) {
     await blockApi.close(id);
 
@@ -72,6 +60,19 @@ export function BlocksProvider({ children }: { children: ReactNode }) {
     if (activeBlockId === id) {
       setActiveBlockId(filtered.length ? filtered[0].id : null);
     }
+  }
+
+  async function createNewBlock() {
+    const newBlock = await blockApi.create({
+      title: `New Block ${Date.now()}`,
+    });
+    openBlock(newBlock.id);
+    return newBlock;
+  }
+
+  async function updateBlock(id: string, request: BlockUpdateRequest) {
+    const block = await blockApi.update(id, request);
+    setOpenBlocks((prev) => prev.map((b) => (b.id === id ? block : b)));
   }
 
   async function deleteBlock(id: string) {
@@ -84,12 +85,12 @@ export function BlocksProvider({ children }: { children: ReactNode }) {
       value={{
         openBlocks,
         activeBlockId,
-        getActiveBlock,
         setOpenBlocks,
         setActiveBlockId,
-        createNewBlock,
+        getActiveBlock,
         openBlock,
         closeBlock,
+        createNewBlock,
         updateBlock,
         deleteBlock,
       }}

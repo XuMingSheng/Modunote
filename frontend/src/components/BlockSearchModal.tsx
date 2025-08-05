@@ -1,18 +1,21 @@
-import { useState, useEffect } from "react";
+import { type FC, useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useBlocks } from "../context/BlocksContext";
-import { blockApi, type Block } from "../api/blockApi";
+import { blockApi, type BlockSearchResponseItem } from "../api/blockApi";
 
-export function BlockSearchModal({
-  isOpen,
-  onClose,
-}: {
+interface BlockSearchModalProps {
   isOpen: boolean;
+  onSelect: (block: BlockSearchResponseItem) => void;
   onClose: () => void;
-}) {
-  const { openBlock } = useBlocks();
+}
+
+export const BlockSearchModal: FC<BlockSearchModalProps> = ({
+  isOpen,
+  onSelect,
+  onClose,
+}) => {
   const [searchTerm, setSearchTerm] = useState("");
-  const [results, setResults] = useState<Block[]>([]);
+  const [results, setResults] = useState<BlockSearchResponseItem[]>([]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -29,6 +32,11 @@ export function BlockSearchModal({
 
     fetchResults();
   }, [searchTerm, isOpen]);
+
+  const handleSelect = (block: BlockSearchResponseItem) => {
+    onSelect(block);
+    onClose();
+  };
 
   if (!isOpen) return null;
 
@@ -60,22 +68,18 @@ export function BlockSearchModal({
             <div
               key={block.id}
               className="cursor-pointer p-2 rounded hover:bg-gray-200"
-              onClick={() => {
-                openBlock(block.id);
-                onClose();
-              }}
+              onClick={() => handleSelect(block)}
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
-                  openBlock(block.id);
-                  onClose();
+                  handleSelect(block);
                 }
               }}
             >
               <div className="font-semibold">{block.title}</div>
               <div className="text-xs text-gray-600 truncate">
-                {block.content}
+                {block.matchedContent}
               </div>
             </div>
           ))}
@@ -83,4 +87,4 @@ export function BlockSearchModal({
       </div>
     </div>
   );
-}
+};

@@ -95,9 +95,8 @@ export const BlockEditor: FC<BlockEditorProps> = ({ block }) => {
       </div>
 
       {/* Content Section */}
-      <div className="text-xs text-gray-400 min-h-full overflow-y-auto">
+      <div className="text-xs text-gray-400 flex-1 overflow-y-auto">
         <MilkdownProvider>
-          {/* <MilkdownEditor block={block} /> */}
           <CrepeEditor
             blockId={block.id}
             initialContent={block.content}

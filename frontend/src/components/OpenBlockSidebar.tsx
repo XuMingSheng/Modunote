@@ -3,14 +3,16 @@ import { Search, Plus, X, Trash2 } from "lucide-react";
 import { cn } from "../lib/utils";
 import { useBlocks } from "../context/BlocksContext";
 import { BlockSearchModal } from "./BlockSearchModal";
+import type { BlockSearchResponseItem } from "@/api/blockApi";
 
 export function OpenBlocksSidebar() {
   const {
-    createNewBlock,
     openBlocks,
     activeBlockId,
     setActiveBlockId,
+    openBlock,
     closeBlock,
+    createNewBlock,
     deleteBlock,
   } = useBlocks();
   const [expanded, setExpanded] = useState(false);
@@ -23,6 +25,11 @@ export function OpenBlocksSidebar() {
     if (confirmation) {
       deleteBlock(blockId);
     }
+  }
+
+  function handleSearchSelect(block: BlockSearchResponseItem) {
+    openBlock(block.id);
+    setSearchOpen(false);
   }
 
   return (
@@ -106,6 +113,7 @@ export function OpenBlocksSidebar() {
 
       <BlockSearchModal
         isOpen={searchOpen}
+        onSelect={handleSearchSelect}
         onClose={() => setSearchOpen(false)}
       />
     </>
