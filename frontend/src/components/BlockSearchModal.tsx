@@ -1,6 +1,7 @@
-import { type FC, useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { blockApi, type BlockSearchResponseItem } from "../api/blockApi";
+import { blockApi } from "@/api/blockApi";
+import { type BlockSearchResponseItem } from "@/api/types/blockSearchResponse";
 
 interface BlockSearchModalProps {
   isOpen: boolean;
@@ -8,11 +9,11 @@ interface BlockSearchModalProps {
   onClose: () => void;
 }
 
-export const BlockSearchModal: FC<BlockSearchModalProps> = ({
+export const BlockSearchModal = ({
   isOpen,
   onSelect,
   onClose,
-}) => {
+}: BlockSearchModalProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [results, setResults] = useState<BlockSearchResponseItem[]>([]);
 

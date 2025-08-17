@@ -1,6 +1,12 @@
 import { ApiError } from "./errors";
+import { type Block } from "./types/block";
+import { type BlockCreateRequest } from "./types/blockCreateRequest";
+import { type BlockUpdateRequest } from "./types/blockUpdateRequest";
+import { type BlockSearchResponse } from "./types/blockSearchResponse";
+import type { BlockGetOpenResponse } from "./types/blockGetOpenResponse";
+import type { BlockGetLinksRepsonse } from "./types/blockGetLinksResponse";
 
-let blocksDb: Block[] = [
+export let blocksDb: Block[] = [
   {
     id: "b1",
     title: "Introduction to Fourier Series",
@@ -317,46 +323,406 @@ See [[Introduction to Fourier Series]]
   },
 ];
 
-let openBlockIds = new Set<string>(["b1", "b2", "b3"]);
+export let openBlockIds = new Set<string>(["b1", "b2", "b3"]);
+export let pinnedBlockIds = new Set<string>([
+  "b1",
+  "b4",
+  "b9",
+  "b11",
+  "b6",
+  "b12",
+  "b14",
+  "b16",
+  "b3",
+  "b8",
+]);
 
-export interface BlockLink {
-  id: string;
-  title: string;
+// Mock closure table for efficient hierarchy queries
+// Each entry represents a specific path: ancestor -> descendant with path as identifier
+export interface ClosureTableEntry {
+  ancestor: string;
+  descendant: string;
+  pathLength: number;
+  path: string[]; // Full path from ancestor to descendant (including both endpoints)
+  pathId: string; // Unique identifier for this path (e.g., "b1->b4->b11")
 }
 
-export interface Block {
-  id: string;
-  title: string;
-  content: string;
+export let closureTable: ClosureTableEntry[] = [
+  // Self-references (pathLength 0)
+  {
+    ancestor: "b1",
+    descendant: "b1",
+    pathLength: 0,
+    path: ["b1"],
+    pathId: "b1",
+  },
+  {
+    ancestor: "b2",
+    descendant: "b2",
+    pathLength: 0,
+    path: ["b2"],
+    pathId: "b2",
+  },
+  {
+    ancestor: "b3",
+    descendant: "b3",
+    pathLength: 0,
+    path: ["b3"],
+    pathId: "b3",
+  },
+  {
+    ancestor: "b4",
+    descendant: "b4",
+    pathLength: 0,
+    path: ["b4"],
+    pathId: "b4",
+  },
+  {
+    ancestor: "b5",
+    descendant: "b5",
+    pathLength: 0,
+    path: ["b5"],
+    pathId: "b5",
+  },
+  {
+    ancestor: "b6",
+    descendant: "b6",
+    pathLength: 0,
+    path: ["b6"],
+    pathId: "b6",
+  },
+  {
+    ancestor: "b7",
+    descendant: "b7",
+    pathLength: 0,
+    path: ["b7"],
+    pathId: "b7",
+  },
+  {
+    ancestor: "b8",
+    descendant: "b8",
+    pathLength: 0,
+    path: ["b8"],
+    pathId: "b8",
+  },
+  {
+    ancestor: "b9",
+    descendant: "b9",
+    pathLength: 0,
+    path: ["b9"],
+    pathId: "b9",
+  },
+  {
+    ancestor: "b10",
+    descendant: "b10",
+    pathLength: 0,
+    path: ["b10"],
+    pathId: "b10",
+  },
+  {
+    ancestor: "b11",
+    descendant: "b11",
+    pathLength: 0,
+    path: ["b11"],
+    pathId: "b11",
+  },
+  {
+    ancestor: "b12",
+    descendant: "b12",
+    pathLength: 0,
+    path: ["b12"],
+    pathId: "b12",
+  },
+  {
+    ancestor: "b13",
+    descendant: "b13",
+    pathLength: 0,
+    path: ["b13"],
+    pathId: "b13",
+  },
+  {
+    ancestor: "b14",
+    descendant: "b14",
+    pathLength: 0,
+    path: ["b14"],
+    pathId: "b14",
+  },
+  {
+    ancestor: "b15",
+    descendant: "b15",
+    pathLength: 0,
+    path: ["b15"],
+    pathId: "b15",
+  },
+  {
+    ancestor: "b16",
+    descendant: "b16",
+    pathLength: 0,
+    path: ["b16"],
+    pathId: "b16",
+  },
 
-  parentBlocks: BlockLink[];
-  childBlocks: BlockLink[];
-  relatedBlocks: BlockLink[];
-}
+  // Direct parent-child relationships (pathLength 1)
+  {
+    ancestor: "b1",
+    descendant: "b2",
+    pathLength: 1,
+    path: ["b1", "b2"],
+    pathId: "b1->b2",
+  },
+  {
+    ancestor: "b1",
+    descendant: "b3",
+    pathLength: 1,
+    path: ["b1", "b3"],
+    pathId: "b1->b3",
+  },
+  {
+    ancestor: "b1",
+    descendant: "b4",
+    pathLength: 1,
+    path: ["b1", "b4"],
+    pathId: "b1->b4",
+  },
+  {
+    ancestor: "b1",
+    descendant: "b7",
+    pathLength: 1,
+    path: ["b1", "b7"],
+    pathId: "b1->b7",
+  },
+  {
+    ancestor: "b1",
+    descendant: "b16",
+    pathLength: 1,
+    path: ["b1", "b16"],
+    pathId: "b1->b16",
+  },
+  {
+    ancestor: "b4",
+    descendant: "b11",
+    pathLength: 1,
+    path: ["b4", "b11"],
+    pathId: "b4->b11",
+  },
+  {
+    ancestor: "b4",
+    descendant: "b12",
+    pathLength: 1,
+    path: ["b4", "b12"],
+    pathId: "b4->b12",
+  },
+  {
+    ancestor: "b6",
+    descendant: "b8",
+    pathLength: 1,
+    path: ["b6", "b8"],
+    pathId: "b6->b8",
+  },
+  {
+    ancestor: "b6",
+    descendant: "b12",
+    pathLength: 1,
+    path: ["b6", "b12"],
+    pathId: "b6->b12",
+  },
+  {
+    ancestor: "b6",
+    descendant: "b14",
+    pathLength: 1,
+    path: ["b6", "b14"],
+    pathId: "b6->b14",
+  },
+  {
+    ancestor: "b9",
+    descendant: "b3",
+    pathLength: 1,
+    path: ["b9", "b3"],
+    pathId: "b9->b3",
+  },
+
+  // Indirect relationships - Multiple paths possible
+  {
+    ancestor: "b1",
+    descendant: "b11",
+    pathLength: 2,
+    path: ["b1", "b4", "b11"],
+    pathId: "b1->b4->b11",
+  },
+  {
+    ancestor: "b1",
+    descendant: "b12",
+    pathLength: 2,
+    path: ["b1", "b4", "b12"],
+    pathId: "b1->b4->b12",
+  },
+  // Note: b12 has multiple parents (b4 and b6), so there would be another path: b6->b12
+  // This creates multiple paths between b1 and b12 if b1 is also connected to b6
+];
 
 function delay<T>(data: T, ms = 300): Promise<T> {
   return new Promise((resolve) => setTimeout(() => resolve(data), ms));
 }
 
-export interface BlockCreateRequest {
-  title: string;
-  content?: string;
-}
+// Helper functions for closure table maintenance
+const addToClosureTable = (ancestorId: string, descendantId: string) => {
+  const directPath = [ancestorId, descendantId];
+  const directPathId = `${ancestorId}->${descendantId}`;
 
-export interface BlockUpdateRequest {
-  title?: string;
-  content?: string;
-  parentBlocks?: BlockLink[];
-  childBlocks?: BlockLink[];
-  relatedBlocks?: BlockLink[];
-}
+  // Add direct relationship if it doesn't exist
+  if (!closureTable.find((entry) => entry.pathId === directPathId)) {
+    closureTable.push({
+      ancestor: ancestorId,
+      descendant: descendantId,
+      pathLength: 1,
+      path: directPath,
+      pathId: directPathId,
+    });
+  }
 
-export interface BlockSearchResponseItem {
-  id: string;
-  title: string;
-  matchedContent: string;
-}
-type BlockSearchResponse = BlockSearchResponseItem[];
+  // Add transitive relationships through all existing paths
+  // All paths ending at ancestor can be extended to descendant
+  const pathsToAncestor = closureTable.filter(
+    (entry) => entry.descendant === ancestorId
+  );
+
+  for (const ancestorPath of pathsToAncestor) {
+    const newPath = [...ancestorPath.path, descendantId];
+    const newPathId = newPath.join("->");
+    const newPathLength = ancestorPath.pathLength + 1;
+
+    // Only add if this exact path doesn't already exist
+    if (!closureTable.find((entry) => entry.pathId === newPathId)) {
+      closureTable.push({
+        ancestor: ancestorPath.ancestor,
+        descendant: descendantId,
+        pathLength: newPathLength,
+        path: newPath,
+        pathId: newPathId,
+      });
+    }
+  }
+
+  // All paths starting from descendant can be extended from ancestor
+  const pathsFromDescendant = closureTable.filter(
+    (entry) => entry.ancestor === descendantId
+  );
+
+  for (const descendantPath of pathsFromDescendant) {
+    const newPath = [ancestorId, ...descendantPath.path];
+    const newPathId = newPath.join("->");
+    const newPathLength = descendantPath.pathLength + 1;
+
+    // Only add if this exact path doesn't already exist
+    if (!closureTable.find((entry) => entry.pathId === newPathId)) {
+      closureTable.push({
+        ancestor: ancestorId,
+        descendant: descendantPath.descendant,
+        pathLength: newPathLength,
+        path: newPath,
+        pathId: newPathId,
+      });
+    }
+  }
+
+  // Combine all ancestor paths with all descendant paths
+  for (const ancestorPath of pathsToAncestor) {
+    for (const descendantPath of pathsFromDescendant) {
+      const newPath = [...ancestorPath.path, ...descendantPath.path.slice(1)]; // Remove duplicate middle node
+      const newPathId = newPath.join("->");
+      const newPathLength =
+        ancestorPath.pathLength + 1 + descendantPath.pathLength;
+
+      // Only add if this exact path doesn't already exist
+      if (!closureTable.find((entry) => entry.pathId === newPathId)) {
+        closureTable.push({
+          ancestor: ancestorPath.ancestor,
+          descendant: descendantPath.descendant,
+          pathLength: newPathLength,
+          path: newPath,
+          pathId: newPathId,
+        });
+      }
+    }
+  }
+};
+
+const removeFromClosureTable = (ancestorId: string, descendantId: string) => {
+  // Remove all paths that contain this direct edge
+  const directEdge = `${ancestorId}->${descendantId}`;
+
+  closureTable = closureTable.filter((entry) => {
+    // Remove direct relationship
+    if (entry.pathId === directEdge) {
+      return false;
+    }
+
+    // Remove any path that contains this edge (pathId contains the edge pattern)
+    if (entry.pathId.includes(directEdge)) {
+      return false;
+    }
+
+    // Also check if the path array contains the consecutive nodes
+    for (let i = 0; i < entry.path.length - 1; i++) {
+      if (entry.path[i] === ancestorId && entry.path[i + 1] === descendantId) {
+        return false;
+      }
+    }
+
+    return true;
+  });
+
+  // Rebuild transitive closure to ensure consistency
+  rebuildTransitiveClosure();
+};
+
+const rebuildTransitiveClosure = () => {
+  // Keep only self-references and direct relationships (pathLength <= 1)
+  const directRelations = closureTable.filter((entry) => entry.pathLength <= 1);
+  closureTable = [...directRelations];
+
+  // Get all direct edges to rebuild from
+  const directEdges = closureTable.filter((entry) => entry.pathLength === 1);
+
+  // Rebuild transitive relationships by combining paths
+  let changed = true;
+  while (changed) {
+    changed = false;
+    const currentSize = closureTable.length;
+
+    // For each existing path, try to extend it with each direct edge
+    const currentPaths = [...closureTable];
+
+    for (const path1 of currentPaths) {
+      for (const path2 of currentPaths) {
+        // Can combine path1 -> path2 if path1 ends where path2 starts
+        if (
+          path1.descendant === path2.ancestor &&
+          path1.ancestor !== path2.descendant
+        ) {
+          const newPath = [...path1.path.slice(0, -1), ...path2.path];
+          const newPathId = newPath.join("->");
+          const newPathLength = path1.pathLength + path2.pathLength;
+
+          // Only add if this exact path doesn't already exist
+          if (!closureTable.find((entry) => entry.pathId === newPathId)) {
+            closureTable.push({
+              ancestor: path1.ancestor,
+              descendant: path2.descendant,
+              pathLength: newPathLength,
+              path: newPath,
+              pathId: newPathId,
+            });
+          }
+        }
+      }
+    }
+
+    if (closureTable.length > currentSize) {
+      changed = true;
+    }
+  }
+};
 
 export const blockApi = {
   async get(id: string): Promise<Block> {
@@ -367,9 +733,18 @@ export const blockApi = {
     throw new ApiError(404, "blockApi.get");
   },
 
-  async getOpen(): Promise<Block[]> {
-    const openBlocks = blocksDb.filter((b) => openBlockIds.has(b.id));
-    return delay(openBlocks);
+  async getLinks(id: string): Promise<BlockGetLinksRepsonse> {
+    const block = blocksDb.find((b) => b.id === id);
+    if (block) {
+      return delay({
+        id: block.id,
+        title: block.title,
+        parentBlocks: block.parentBlocks,
+        childBlocks: block.childBlocks,
+        relatedBlocks: block.relatedBlocks,
+      });
+    }
+    throw new ApiError(404, "blockApi.get");
   },
 
   async search(query: string): Promise<BlockSearchResponse> {
@@ -388,7 +763,11 @@ export const blockApi = {
     return delay(results);
   },
 
-  async create(request: BlockCreateRequest): Promise<Block> {
+  async create(
+    request: BlockCreateRequest = {
+      title: `New Block ${Date.now()}`,
+    }
+  ): Promise<Block> {
     const newBlock: Block = {
       id: `b${Date.now()}`,
       title: request.title,
@@ -399,18 +778,29 @@ export const blockApi = {
     };
     blocksDb.push(newBlock);
     openBlockIds.add(newBlock.id);
-    return delay(newBlock);
-  },
 
-  async open(id: string): Promise<void> {
-    openBlockIds.add(id);
-    return delay(undefined);
+    // Add self-reference to closure table
+    closureTable.push({
+      ancestor: newBlock.id,
+      descendant: newBlock.id,
+      pathLength: 0,
+      path: [newBlock.id],
+      pathId: newBlock.id,
+    });
+
+    return delay(newBlock);
   },
 
   async update(id: string, request: BlockUpdateRequest): Promise<Block> {
     const block = blocksDb.find((b) => b.id === id) ?? null;
     if (block) {
       if (request.parentBlocks) {
+        // Remove old parent relationships from closure table
+        for (const oldParent of block.parentBlocks) {
+          removeFromClosureTable(oldParent.id, id);
+        }
+
+        // Remove from block references
         for (const parentBlock of blocksDb) {
           const index = parentBlock.childBlocks.findIndex((b) => b.id === id);
           if (index !== -1) {
@@ -418,15 +808,24 @@ export const blockApi = {
           }
         }
 
+        // Add new parent relationships
         for (const link of request.parentBlocks) {
           const parentBlock = blocksDb.find((b) => b.id === link.id);
           if (parentBlock) {
             parentBlock.childBlocks.push({ id: block.id, title: block.title });
+            // Add to closure table
+            addToClosureTable(link.id, id);
           }
         }
       }
 
       if (request.childBlocks) {
+        // Remove old child relationships from closure table
+        for (const oldChild of block.childBlocks) {
+          removeFromClosureTable(id, oldChild.id);
+        }
+
+        // Remove from block references
         for (const childBlock of blocksDb) {
           const index = childBlock.parentBlocks.findIndex((b) => b.id === id);
           if (index !== -1) {
@@ -434,10 +833,13 @@ export const blockApi = {
           }
         }
 
+        // Add new child relationships
         for (const link of request.childBlocks) {
           const childBlock = blocksDb.find((b) => b.id === link.id);
           if (childBlock) {
             childBlock.parentBlocks.push({ id: block.id, title: block.title });
+            // Add to closure table
+            addToClosureTable(id, link.id);
           }
         }
       }
@@ -473,12 +875,12 @@ export const blockApi = {
     throw new ApiError(404, "blockApi.update");
   },
 
-  async close(id: string): Promise<void> {
-    openBlockIds.delete(id);
-    return delay(undefined);
-  },
-
   async delete(id: string): Promise<void> {
+    // Remove all closure table entries involving this block
+    closureTable = closureTable.filter(
+      (entry) => entry.ancestor !== id && entry.descendant !== id
+    );
+
     blocksDb = blocksDb.filter((b) => b.id !== id);
     for (const block of blocksDb) {
       let index = block.parentBlocks.findIndex((b) => b.id === id);
@@ -495,7 +897,140 @@ export const blockApi = {
       }
     }
 
+    // Rebuild transitive closure to handle any broken paths
+    rebuildTransitiveClosure();
+
+    openBlockIds.delete(id);
+    pinnedBlockIds.delete(id);
+    return delay(undefined);
+  },
+
+  async getOpen(): Promise<BlockGetOpenResponse> {
+    const openBlocks = blocksDb
+      .filter((b) => openBlockIds.has(b.id))
+      .map((b) => ({
+        id: b.id,
+        title: b.title,
+      }));
+    return delay(openBlocks);
+  },
+
+  async open(id: string): Promise<void> {
+    openBlockIds.add(id);
+    return delay(undefined);
+  },
+
+  async close(id: string): Promise<void> {
     openBlockIds.delete(id);
     return delay(undefined);
+  },
+
+  async pin(id: string): Promise<void> {
+    pinnedBlockIds.add(id);
+    return delay(undefined);
+  },
+
+  async unpin(id: string): Promise<void> {
+    pinnedBlockIds.delete(id);
+    return delay(undefined);
+  },
+
+  // Closure table query methods
+  async isAncestor(ancestorId: string, descendantId: string): Promise<boolean> {
+    const exists = closureTable.some(
+      (entry) =>
+        entry.ancestor === ancestorId &&
+        entry.descendant === descendantId &&
+        entry.pathLength > 0
+    );
+    console.log("isAncestor", ancestorId, descendantId);
+    return delay(exists, 0);
+  },
+
+  async getAncestors(id: string): Promise<string[]> {
+    const ancestors = closureTable
+      .filter((entry) => entry.descendant === id && entry.pathLength > 0)
+      .map((entry) => entry.ancestor);
+    return delay(ancestors);
+  },
+
+  async getDescendants(id: string): Promise<string[]> {
+    const descendants = closureTable
+      .filter((entry) => entry.ancestor === id && entry.pathLength > 0)
+      .map((entry) => entry.descendant);
+    return delay(descendants);
+  },
+
+  async getPathLength(
+    ancestorId: string,
+    descendantId: string
+  ): Promise<number | null> {
+    const entry = closureTable.find(
+      (entry) =>
+        entry.ancestor === ancestorId && entry.descendant === descendantId
+    );
+    return delay(entry ? entry.pathLength : null);
+  },
+
+  async getClosureTable(): Promise<ClosureTableEntry[]> {
+    return delay([...closureTable]);
+  },
+
+  // New path-aware query methods
+  async getAllPaths(
+    ancestorId: string,
+    descendantId: string
+  ): Promise<ClosureTableEntry[]> {
+    const paths = closureTable.filter(
+      (entry) =>
+        entry.ancestor === ancestorId &&
+        entry.descendant === descendantId &&
+        entry.pathLength > 0
+    );
+    return delay(paths);
+  },
+
+  async getAllPathsOfNodes(nodeIds: string[]): Promise<ClosureTableEntry[]> {
+    const idSet = new Set(nodeIds);
+    const paths = closureTable.filter(
+      (entry) =>
+        idSet.has(entry.ancestor) &&
+        idSet.has(entry.descendant) &&
+        entry.pathLength > 0
+    );
+    return delay(paths);
+  },
+
+  async getShortestPath(
+    ancestorId: string,
+    descendantId: string
+  ): Promise<ClosureTableEntry | null> {
+    const paths = closureTable.filter(
+      (entry) =>
+        entry.ancestor === ancestorId &&
+        entry.descendant === descendantId &&
+        entry.pathLength > 0
+    );
+
+    if (paths.length === 0) return delay(null);
+
+    const shortestPath = paths.reduce((shortest, current) =>
+      current.pathLength < shortest.pathLength ? current : shortest
+    );
+    return delay(shortestPath);
+  },
+
+  async getPathsByLength(
+    ancestorId: string,
+    descendantId: string,
+    pathLength: number
+  ): Promise<ClosureTableEntry[]> {
+    const paths = closureTable.filter(
+      (entry) =>
+        entry.ancestor === ancestorId &&
+        entry.descendant === descendantId &&
+        entry.pathLength === pathLength
+    );
+    return delay(paths);
   },
 };

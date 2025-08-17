@@ -1,28 +1,36 @@
 import { useState } from "react";
 import { FunctionalSidebar } from "./components/FuncitonalSidebar";
-import { Workplace } from "./pages/Workplace";
+import { BlocksPage } from "./pages/BlocksPage";
+import { CanvasPage } from "./pages/CanvasPage";
+import { ErrorProvider, useError } from "./context/ErrorContext";
+import { GlobalErrorPopup } from "./components/GlobalErrorPopup";
 
-function App() {
-  const [page, setPage] = useState<string>("workplace");
-  // const [ping, setPing] = useState<string>("...");
+export type PageId = "blocks" | "canvases" | "graph";
 
-  // useEffect(() => {
-  //   const apiUrl = import.meta.env.VITE_API_URL;
-  //   fetch(`${apiUrl}/api/ping`)
-  //     .then((res) => res.text())
-  //     .then(setPing)
-  //     .catch(() => setPing("backend offline"));
-  // }, []);
+function AppContent() {
+  const [pageId, setPageId] = useState<PageId>("blocks");
+  const { error, setError } = useError();
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      <FunctionalSidebar active={page} onChange={setPage} />
+      <FunctionalSidebar activePageId={pageId} onChange={setPageId} />
       <main className="flex-1 ml-14 transition-all duration-300">
-        {page === "workplace" && <Workplace />}
-        {page === "graph" && <div>Graph Page (To be implemented)</div>}
-        {page === "notes" && <div>Notes Page (To be implemented)</div>}
+        {pageId === "blocks" && <BlocksPage />}
+        {pageId === "canvases" && <CanvasPage />}
+        {pageId === "graph" && <div>Graph Page (To be implemented)</div>}
       </main>
+      {error && (
+        <GlobalErrorPopup message={error} onDismiss={() => setError(null)} />
+      )}
     </div>
+  );
+}
+
+function App() {
+  return (
+    <ErrorProvider>
+      <AppContent />
+    </ErrorProvider>
   );
 }
 

@@ -1,23 +1,33 @@
-import { type FC, useEffect, useState } from "react";
-import { MarkdownRenderer } from "./MarkdownRenderer";
-import { type Block, blockApi } from "@/api/blockApi";
+import { useEffect, useState } from "react";
+import { useError } from "@/context/ErrorContext";
+import { MarkdownRenderer } from "@/components/shared/MarkdownRenderer";
+import { blockApi } from "@/api/blockApi";
+import { type Block } from "@/api/types/block";
 
 interface BlockPreviewTooltipProps {
   blockId: string;
 }
 
-export const BlockPreviewTooltip: FC<BlockPreviewTooltipProps> = ({
-  blockId,
-}) => {
+export const BlockPreviewTooltip = ({ blockId }: BlockPreviewTooltipProps) => {
   const [block, setBlock] = useState<Block | null>(null);
 
+  const { setError } = useError();
+
   useEffect(() => {
-    const fetchBlock = async () => {
+    loadBlock();
+  }, [blockId]);
+
+  const loadBlock = async () => {
+    try {
       const block = await blockApi.get(blockId);
       setBlock(block);
-    };
-    fetchBlock();
-  }, [blockId]);
+    } catch (error) {
+      console.error("Failed to load block: ", error);
+      setError(
+        `Failed to load block: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
+    }
+  };
 
   if (!block) {
     return (

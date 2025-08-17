@@ -1,14 +1,17 @@
-import { type FC, useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChevronLeft } from "lucide-react";
-import { type Block } from "@/api/blockApi";
 import { LinkedBlockSection } from "./LinkedBlockSection";
 import { BlockPreviewTooltip } from "./BlockPreviewTooltip";
 
 interface LinkedBlockSidebarProps {
-  block: Block;
+  activeBlockId: string;
+  onActiveBlockIdChange: (newId: string) => void;
 }
 
-export const LinkedBlockSidebar: FC<LinkedBlockSidebarProps> = ({ block }) => {
+export const LinkedBlockSidebar = ({
+  activeBlockId,
+  onActiveBlockIdChange,
+}: LinkedBlockSidebarProps) => {
   const [expanded, setExpanded] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [previewHovered, setPreviewHovered] = useState(false);
@@ -18,7 +21,7 @@ export const LinkedBlockSidebar: FC<LinkedBlockSidebarProps> = ({ block }) => {
 
   useEffect(() => {
     setPreviewBlockId(null);
-  }, [block.id]);
+  }, [activeBlockId]);
 
   useEffect(() => {
     if (hovered) {
@@ -49,14 +52,6 @@ export const LinkedBlockSidebar: FC<LinkedBlockSidebarProps> = ({ block }) => {
     }
   }, [hoveredBlockId, previewHovered]);
 
-  function handleMouseEnterBlock(id: string) {
-    setHoveredBlockId(id);
-  }
-
-  function handleMouseLeaveBlock(id: string) {
-    setHoveredBlockId(null);
-  }
-
   return (
     <div
       className={`transition-all duration-200 h-full bg-gray-50 border-l border-gray-300 ${
@@ -76,24 +71,24 @@ export const LinkedBlockSidebar: FC<LinkedBlockSidebarProps> = ({ block }) => {
         <div className="p-4 space-y-6 overflow-y-auto flex-1">
           <LinkedBlockSection
             title="Parents"
-            blocksType="parentBlocks"
-            activeBlock={block}
-            onMouseEnderBlock={handleMouseEnterBlock}
-            onMouseLeaveBlock={handleMouseLeaveBlock}
+            blockLinkType="parentBlocks"
+            activeBlockId={activeBlockId}
+            onActiveBlockIdChange={onActiveBlockIdChange}
+            onHoverBlockChange={(id) => setHoveredBlockId(id)}
           />
           <LinkedBlockSection
             title="Children"
-            blocksType="childBlocks"
-            activeBlock={block}
-            onMouseEnderBlock={handleMouseEnterBlock}
-            onMouseLeaveBlock={handleMouseLeaveBlock}
+            blockLinkType="childBlocks"
+            activeBlockId={activeBlockId}
+            onActiveBlockIdChange={onActiveBlockIdChange}
+            onHoverBlockChange={(id) => setHoveredBlockId(id)}
           />
           <LinkedBlockSection
             title="Related"
-            blocksType="relatedBlocks"
-            activeBlock={block}
-            onMouseEnderBlock={handleMouseEnterBlock}
-            onMouseLeaveBlock={handleMouseLeaveBlock}
+            blockLinkType="relatedBlocks"
+            activeBlockId={activeBlockId}
+            onActiveBlockIdChange={onActiveBlockIdChange}
+            onHoverBlockChange={(id) => setHoveredBlockId(id)}
           />
         </div>
       )}
