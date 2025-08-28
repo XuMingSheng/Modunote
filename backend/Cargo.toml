@@ -3,11 +3,25 @@ name = "backend"
 version = "0.1.0"
 edition = "2024"
 
+[features]
+default = ["native"]
+native = ["storage/sqlite"]
+
 [dependencies]
-axum = "0.7"
-tokio = { version = "1.38", features = ["full"] }
-serde = { workspace = true, features = ["derive"] }
 engine = { path = "../crates/engine" }
-parser = { path = "../crates/parser" }
-search = { path = "../crates/search" }
-storage = { path = "../crates/storage" }
+storage = { path = "../crates/storage"}
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+uuid  = { workspace = true }
+chrono = { workspace = true }
+tokio = { version = "1.38", features = ["full"] }
+axum = "0.8.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["trace"] }
+dotenvy = "0.15"
+utoipa = { version = "5", features = ["axum_extras", "chrono", "uuid"] }
+utoipa-swagger-ui = { version = "9", features = ["axum"] }
+utoipa-axum = "0.2"

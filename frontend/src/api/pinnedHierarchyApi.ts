@@ -1,11 +1,11 @@
 import { type PinnedItem } from "@/api/types/pinnedItem";
-import { blockApi, type ClosureTableEntry } from "./blockApi";
+import { blockApi, type ClosureTableEntry } from "./blocks/blockApi";
 import { canvasApi } from "./canvasApi";
 import { ApiError } from "./errors";
-import { closureTable } from "./blockApi";
-import { pinnedBlockIds } from "./blockApi";
+import { closureTable } from "./blocks/blockApi";
+import { pinnedBlockIds } from "./blocks/blockApi";
 import { pinnedCanvasIds } from "./canvasApi";
-import { type Block } from "./types/block";
+import { type Block } from "./blocks/types/getBlockResponse";
 import { type Canvas } from "./types/canvas";
 
 function delay<T>(data: T, ms = 300): Promise<T> {

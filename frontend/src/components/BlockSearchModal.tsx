@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { X } from "lucide-react";
-import { blockApi } from "@/api/blockApi";
-import { type BlockSearchResponseItem } from "@/api/types/blockSearchResponse";
+
+import { useAppStore } from "@/store/useAppStore";
+import { searchApi } from "@/api/searchApi";
+import { type SearchBlockResponseItem } from "@/api/types/searchBlocksResponse";
 
 interface BlockSearchModalProps {
   isOpen: boolean;
-  onSelect: (block: BlockSearchResponseItem) => void;
+  onSelect: (block: SearchBlockResponseItem) => void;
   onClose: () => void;
 }
 
@@ -14,26 +16,29 @@ export const BlockSearchModal = ({
   onSelect,
   onClose,
 }: BlockSearchModalProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [results, setResults] = useState<BlockSearchResponseItem[]>([]);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<SearchBlockResponseItem[]>([]);
+
+  const setError = useAppStore((state) => state.setError);
 
   useEffect(() => {
     if (!isOpen) return;
+    searchBlocks(query);
+  }, [query, isOpen]);
 
-    async function fetchResults() {
-      if (searchTerm.trim() === "") {
-        setResults([]);
-        return;
-      }
-
-      const res = await blockApi.search(searchTerm);
-      setResults(res);
+  const searchBlocks = async (query: string) => {
+    try {
+      const response = await searchApi.searchBlocks(query);
+      setResults(response.blocks);
+    } catch (error) {
+      console.error("Failed to search blocks:", error);
+      setError(
+        `Failed to search blocks: ${error instanceof Error ? error.message : "Unknown error"}`
+      );
     }
+  };
 
-    fetchResults();
-  }, [searchTerm, isOpen]);
-
-  const handleSelect = (block: BlockSearchResponseItem) => {
+  const handleSelect = (block: SearchBlockResponseItem) => {
     onSelect(block);
     onClose();
   };
@@ -49,8 +54,8 @@ export const BlockSearchModal = ({
             type="text"
             placeholder="Search blocks..."
             className="flex-1 px-3 py-2 border rounded"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
           />
           <button
             className="ml-2 p-1 text-gray-600 hover:text-gray-800"
@@ -79,7 +84,7 @@ export const BlockSearchModal = ({
             >
               <div className="font-semibold">{block.title}</div>
               <div className="text-xs text-gray-600 truncate">
-                {block.matchedContent}
+                {block.title}
               </div>
             </div>
           ))}

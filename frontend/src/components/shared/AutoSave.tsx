@@ -1,28 +1,58 @@
-import { useState, useRef, useEffect } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  type RefAttributes,
+  useImperativeHandle,
+} from "react";
+import { isDeepEqual, clone } from "remeda";
 
-interface AutoSaveProps {
+interface AutoSaveProps extends RefAttributes<unknown> {
   activeId: string;
   data: any;
   interval: number;
-  onSave: () => Promise<boolean>;
+  onSave: () => Promise<void>;
 }
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
 export const AutoSave = ({
+  ref,
   activeId,
   data,
   interval,
   onSave,
 }: AutoSaveProps) => {
   const [status, setStatus] = useState<SaveStatus>("idle");
+  const [latestData, setLatestData] = useState(data);
   const lastSavedState = useRef({
     activeId,
-    data,
+    data: clone(data),
   });
   const saveTimeout = useRef<number | null>(null);
 
+  useImperativeHandle(ref, () => ({
+    updateData: (latestData: typeof data) => {
+      setLatestData(latestData);
+    },
+  }));
+
   useEffect(() => {
+    // console.log(
+    //   "passed activeId:",
+    //   activeId,
+    //   "savedId:",
+    //   lastSavedState.current.activeId
+    // );
+    // console.log(
+    //   "prop data:",
+    //   data,
+    //   "latest data:",
+    //   latestData,
+    //   "savedData:",
+    //   lastSavedState.current.data
+    // );
+
     // Check if the active ID has changed, which means we're on a new document
     if (activeId !== lastSavedState.current.activeId) {
       if (saveTimeout.current) {
@@ -30,11 +60,12 @@ export const AutoSave = ({
       }
 
       lastSavedState.current.activeId = activeId;
-      lastSavedState.current.data = data;
+      lastSavedState.current.data = clone(data);
+      setLatestData(data);
       setStatus("idle");
     }
     // Check if the data has changed from the last saved state
-    else if (data !== lastSavedState.current.data) {
+    else if (!isDeepEqual(latestData, lastSavedState.current.data)) {
       if (saveTimeout.current) {
         clearTimeout(saveTimeout.current);
       }
@@ -48,17 +79,14 @@ export const AutoSave = ({
         clearTimeout(saveTimeout.current);
       }
     };
-  }, [activeId, data]);
+  }, [activeId, latestData]);
 
   const saveData = async () => {
-    const success = await onSave();
-    if (success) {
-      lastSavedState.current.data = {
-        activeId,
-        data,
-      };
+    try {
+      await onSave();
+      lastSavedState.current.data = clone(latestData);
       setStatus("saved");
-    } else {
+    } catch (_) {
       setStatus("error");
     }
   };

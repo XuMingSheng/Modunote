@@ -11,8 +11,8 @@ import {
 } from "lucide-react";
 import { MarkdownRenderer } from "../shared/MarkdownRenderer";
 import { type CanvasBlockPlacement } from "@/api/types/canvas";
-import { type Block } from "@/api/types/block";
-import { blockApi } from "@/api/blockApi";
+import { type Block } from "@/api/blocks/types/getBlockResponse";
+import { blockApi } from "@/api/blocks/blockApi";
 import { cn } from "@/lib/utils";
 
 interface BlockCardProps {
