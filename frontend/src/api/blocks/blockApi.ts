@@ -4,7 +4,7 @@ import { type GetBlockResponse } from "./types/getBlockResponse";
 import { type CreateBlockRequest } from "./types/createBlockRequest";
 import { type CreateBlockResponse } from "./types/createBlockResponse";
 import { type UpdateBlockRequest } from "./types/updateBlockRequest";
-import { type UpdateBlockResponse } from "./types/updateBlcokResponse";
+import { type UpdateBlockResponse } from "./types/updateBlockResponse";
 
 export const blockApi = {
   async get(id: string): Promise<GetBlockResponse> {

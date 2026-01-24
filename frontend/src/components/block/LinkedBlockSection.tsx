@@ -5,8 +5,8 @@ import { useAppStore } from "@/store/useAppStore";
 import { type BlockLinkType } from "@/store/slices/blocksSlice";
 import { BlockSearchModal } from "@/components/BlockSearchModal";
 import { blockApi } from "@/api/blocks/blockApi";
-import type { BlockLink } from "@/api/blocks/types/getBlockLinksResponse";
-import type { SearchBlocksResponseItem } from "@/api/types/searchBlocksResponse";
+import type { LinkedBlock } from "@/api/blocks/types/getBlockLinksResponse";
+import type { SearchBlocksResponseItem } from "@/api/search/types/searchBlocksResponse";
 interface LinkedBlockSectionProps {
   title: string;
   linkType: BlockLinkType;
@@ -21,7 +21,7 @@ export const LinkedBlockSection = ({
   const activateBlock = useAppStore((state) => state.activateBlock);
   const createLink = useAppStore((state) => state.createLinkForActiveBlock);
   const deleteLink = useAppStore((state) => state.deleteLinkForActiveBlock);
-  let blockLinks: BlockLink[] | null;
+  let blockLinks: LinkedBlock[] | null;
 
   switch (linkType) {
     case "parents": {

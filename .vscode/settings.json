@@ -22,6 +22,7 @@
     "editor.defaultFormatter": "rust-lang.rust-analyzer",
     "editor.formatOnSave": true
   },
+  "rust-analyzer.linkedProjects": ["./backend/Cargo.toml"],
   "rust-analyzer.check.command": "clippy",
   "rust-analyzer.procMacro.enable": true,
   "rust-analyzer.cargo.buildScripts.enable": true,

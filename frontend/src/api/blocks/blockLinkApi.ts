@@ -10,6 +10,10 @@ import type {
   CreateChildLinkRequest,
   CreateRelatedLinkRequest,
 } from "./types/createBlockLinkRequest";
+import type {
+  CreateDirectionalLinkResponse,
+  CreateRelatedLinkResponse,
+} from "./types/createBlockLinkResponse";
 
 export const blockLinkApi = {
   async getParents(id: string): Promise<GetBlockParentsResponse> {
@@ -32,7 +36,7 @@ export const blockLinkApi = {
 
   async getRelated(id: string): Promise<GetBlockRelatedLinkResposne> {
     try {
-      const response = await backendClient.get(`/blocks/${id}/related-links`);
+      const response = await backendClient.get(`/blocks/${id}/related`);
       return response.data;
     } catch (error) {
       throw ApiError.fromError(error);
@@ -42,19 +46,30 @@ export const blockLinkApi = {
   async createParentLink(
     blockId: string,
     parentBlockId: string
-  ): Promise<void> {
+  ): Promise<CreateDirectionalLinkResponse> {
     try {
       const request: CreateParentLinkRequest = { parentBlockId };
-      await backendClient.post(`/blocks/${blockId}/parents`, request);
+      const response = await backendClient.post(
+        `/blocks/${blockId}/parents`,
+        request
+      );
+      return response.data;
     } catch (error) {
       throw ApiError.fromError(error);
     }
   },
 
-  async createChildLink(blockId: string, childBlockId: string): Promise<void> {
+  async createChildLink(
+    blockId: string,
+    childBlockId: string
+  ): Promise<CreateDirectionalLinkResponse> {
     try {
       const request: CreateChildLinkRequest = { childBlockId };
-      await backendClient.post(`/blocks/${blockId}/children`, request);
+      const response = await backendClient.post(
+        `/blocks/${blockId}/children`,
+        request
+      );
+      return response.data;
     } catch (error) {
       throw ApiError.fromError(error);
     }
@@ -63,10 +78,14 @@ export const blockLinkApi = {
   async createRelatedLink(
     blockId: string,
     relatedBlockId: string
-  ): Promise<void> {
+  ): Promise<CreateRelatedLinkResponse> {
     try {
       const request: CreateRelatedLinkRequest = { relatedBlockId };
-      await backendClient.post(`/blocks/${blockId}/related-links`, request);
+      const response = await backendClient.post(
+        `/blocks/${blockId}/related`,
+        request
+      );
+      return response.data;
     } catch (error) {
       throw ApiError.fromError(error);
     }
@@ -97,7 +116,7 @@ export const blockLinkApi = {
   ): Promise<void> {
     try {
       await backendClient.delete(
-        `/blocks/${blockId}/related-links/${relatedBlockId}`
+        `/blocks/${blockId}/related/${relatedBlockId}`
       );
     } catch (error) {
       throw ApiError.fromError(error);

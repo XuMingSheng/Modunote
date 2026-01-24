@@ -2,7 +2,7 @@ import { X, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 import { useAppStore } from "@/store/useAppStore";
-import type { OpenedBlock } from "@/api/blocks/types/getOpenedblocksResponse";
+import type { OpenedBlock } from "@/api/workspace/types/getOpenedBlocksResponse";
 
 interface OpenedBlockListProps {
   expanded: boolean;

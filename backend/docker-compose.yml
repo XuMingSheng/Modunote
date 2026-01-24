@@ -1,0 +1,26 @@
+services:
+  postgres_dev:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: modunote
+      POSTGRES_PASSWORD: modunote
+      POSTGRES_DB: modunote_dev
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+
+  postgres_test:
+    image: postgres:16
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRES_USER: modunote
+      POSTGRES_PASSWORD: modunote
+      POSTGRES_DB: modunote_test
+    volumes:
+      - postgres_test_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_dev_data:
+  postgres_test_data:

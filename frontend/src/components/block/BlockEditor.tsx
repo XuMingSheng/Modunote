@@ -103,7 +103,9 @@ export const BlockEditor = () => {
       <div className="text-xs text-gray-400 flex-1 overflow-y-auto">
         <MilkdownEditor
           initialContent={loadedContent!}
-          onUpdate={(updatedContent) => handleChangeContent(updatedContent)}
+          onUpdate={(updatedContent) => {
+            handleChangeContent(updatedContent);
+          }}
         />
       </div>
     </div>

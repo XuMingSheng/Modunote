@@ -2,12 +2,12 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 
 import { useAppStore } from "@/store/useAppStore";
-import { searchApi } from "@/api/searchApi";
-import { type SearchBlockResponseItem } from "@/api/types/searchBlocksResponse";
+import { searchApi } from "@/api/search/searchApi";
+import { type SearchBlocksResponseItem } from "@/api/search/types/searchBlocksResponse";
 
 interface BlockSearchModalProps {
   isOpen: boolean;
-  onSelect: (block: SearchBlockResponseItem) => void;
+  onSelect: (block: SearchBlocksResponseItem) => void;
   onClose: () => void;
 }
 
@@ -17,7 +17,7 @@ export const BlockSearchModal = ({
   onClose,
 }: BlockSearchModalProps) => {
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<SearchBlockResponseItem[]>([]);
+  const [results, setResults] = useState<SearchBlocksResponseItem[]>([]);
 
   const setError = useAppStore((state) => state.setError);
 
@@ -38,7 +38,7 @@ export const BlockSearchModal = ({
     }
   };
 
-  const handleSelect = (block: SearchBlockResponseItem) => {
+  const handleSelect = (block: SearchBlocksResponseItem) => {
     onSelect(block);
     onClose();
   };

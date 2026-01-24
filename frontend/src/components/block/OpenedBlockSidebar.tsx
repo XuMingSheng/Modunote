@@ -6,7 +6,7 @@ import { useAppStore } from "@/store/useAppStore";
 import { BlockSearchModal } from "@/components/BlockSearchModal";
 import { OpenedBlockList } from "./OpenedBlockList";
 import { blockApi } from "@/api/blocks/blockApi";
-import type { SearchBlocksResponseItem } from "@/api/types/searchBlocksResponse";
+import type { SearchBlocksResponseItem } from "@/api/search/types/searchBlocksResponse";
 
 export const OpenedBlocksSidebar = () => {
   const [expanded, setExpanded] = useState(false);

@@ -16,7 +16,7 @@ export function BlocksPage() {
       {/* Sidebar for open blocks */}
       <OpenedBlocksSidebar />
       {/* Center editor */}
-      <div className="flex-1 p-4 bg-white border-l border-gray-300 h-screen">
+      <div className="flex-1 p-4 h-screen bg-white border-l border-gray-300">
         <BlockEditor />
       </div>
       {/* Sidebar for linked blocks */}

@@ -1,10 +1,10 @@
 import type { StateCreator } from "zustand";
 import { type ErrorSlice } from "./errorSlice";
-import { workspaceApi } from "@/api/workspaceApi";
+import { workspaceApi } from "@/api/workspace/workspaceApi";
 import { blockApi } from "@/api/blocks/blockApi";
 import { blockLinkApi } from "@/api/blocks/blockLinkApi";
 import { type GetBlockResponse } from "@/api/blocks/types/getBlockResponse";
-import { type OpenedBlock } from "@/api/blocks/types/getOpenedblocksResponse";
+import { type OpenedBlock } from "@/api/workspace/types/getOpenedBlocksResponse";
 
 export type BlockLinkType = "parents" | "children" | "related";
 type Block = GetBlockResponse;

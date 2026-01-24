@@ -1,0 +1,61 @@
+root := justfile_directory()
+compose_project := env_var_or_default("COMPOSE_PROJECT_NAME", "backend")
+compose := "docker compose -f docker-compose.yml -p " + compose_project
+
+sqlite_dev_url := "sqlite://" + root + "/data/modunote_dev.sqlite"
+sqlite_test_url := "sqlite://" + root + "/data/modunote_test.sqlite"
+
+postgres_dev_url := "postgres://modunote:modunote@localhost:5432/modunote_dev"
+postgres_test_url := "postgres://modunote:modunote@localhost:5433/modunote_test"
+
+postgres-dev-up:
+  {{compose}} up -d postgres_dev
+
+postgres-dev-reset:
+  {{compose}} rm -sf postgres_test
+  docker volume rm {{compose_project}}_postgres_dev_data
+
+postgres-test-up:
+  {{compose}} up -d postgres_test
+
+postgres-test-down:
+  {{compose}} rm -sf postgres_test
+
+postgres-test-reset:
+  {{compose}} rm -sf postgres_test
+  docker volume rm {{compose_project}}_postgres_test_data
+
+migrate-sqlite-dev:
+  mkdir -p {{root}}/data
+  touch {{root}}/data/modunote_dev.sqlite
+  sqlx migrate run --source crates/storage_sqlite/migrations --database-url {{sqlite_dev_url}}
+
+migrate-postgres-dev:
+  sqlx migrate run --source crates/storage_postgres/migrations --database-url {{postgres_dev_url}}
+
+test-sqlite:
+  mkdir -p {{root}}/data
+  rm -f {{root}}/data/modunote_test.sqlite
+  touch {{root}}/data/modunote_test.sqlite
+  sqlx migrate run --source crates/storage_sqlite/migrations --database-url {{sqlite_test_url}}
+  DATABASE_URL={{sqlite_test_url}} cargo test -p storage-sqlite
+  rm -f {{root}}/data/modunote_test.sqlite
+
+test-postgres:
+  #!/usr/bin/env bash
+  # Stop the script immediately if 'up' fails
+  set -e
+  
+  cleanup() {
+    echo "Cleaning up..."
+    just postgres-test-down
+  }
+  
+  # Always run cleanup on exit
+  trap cleanup EXIT
+
+  # Start the environment
+  just postgres-test-up
+
+  # Run tests
+  DATABASE_URL={{postgres_test_url}} cargo test -p storage-postgres

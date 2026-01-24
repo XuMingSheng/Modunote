@@ -1,16 +1,16 @@
-export interface BlockLink {
+export interface LinkedBlock {
   blockId: string;
   title: string;
 }
 
 export interface GetBlockParentsResponse {
-  parentBlocks: BlockLink[];
+  parentBlocks: LinkedBlock[];
 }
 
 export interface GetBlockChildrenResponse {
-  childBlocks: BlockLink[];
+  childBlocks: LinkedBlock[];
 }
 
 export interface GetBlockRelatedLinkResposne {
-  relatedBlocks: BlockLink[];
+  relatedBlocks: LinkedBlock[];
 }
