@@ -5,8 +5,12 @@ compose := "docker compose -f docker-compose.yml -p " + compose_project
 sqlite_dev_url := "sqlite://" + root + "/data/modunote_dev.sqlite"
 sqlite_test_url := "sqlite://" + root + "/data/modunote_test.sqlite"
 
-postgres_dev_url := "postgres://modunote:modunote@localhost:5432/modunote_dev"
-postgres_test_url := "postgres://modunote:modunote@localhost:5433/modunote_test"
+postgres_dev_url := "postgres://modunote:modunote@localhost:5432/modunote_dev?sslmode=disable"
+postgres_test_url := "postgres://modunote:modunote@localhost:5433/modunote_test?sslmode=disable"
+
+install:
+    rustup show active-toolchain
+    cargo fetch
 
 postgres-dev-up:
   {{compose}} up -d postgres_dev
@@ -48,7 +52,7 @@ test-postgres:
   
   cleanup() {
     echo "Cleaning up..."
-    just postgres-test-down
+    just postgres-test-reset
   }
   
   # Always run cleanup on exit
@@ -56,6 +60,13 @@ test-postgres:
 
   # Start the environment
   just postgres-test-up
+  for i in {1..30}; do
+    if {{compose}} exec -T postgres_test pg_isready -U modunote -d modunote_test >/dev/null 2>&1; then
+      break
+    fi
+    sleep 1
+  done
+  sqlx migrate run --source crates/storage_postgres/migrations --database-url {{postgres_test_url}}
 
   # Run tests
   DATABASE_URL={{postgres_test_url}} cargo test -p storage-postgres

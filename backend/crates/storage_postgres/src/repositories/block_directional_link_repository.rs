@@ -1,9 +1,9 @@
 use async_trait::async_trait;
 use chrono::Utc;
-use sqlx::{Acquire, Executor, Sqlite};
+use sqlx::{Acquire, Executor, Postgres};
 use uuid::Uuid;
 
-use crate::helpers::SqliteBlockDirectionalPathHelper;
+use crate::helpers::PostgresBlockDirectionalPathHelper;
 use domain::blocks::BlockDirectionalLink;
 use storage::helpers::{
     block_directional_path_helper::BlockDirectionalPathHelper,
@@ -16,38 +16,23 @@ use storage::repositories::block_directional_link_repository::{
 };
 
 #[derive(Clone, Debug, Default)]
-pub struct SqliteBlockDirectionalLinkRepository {
-    path_helper: SqliteBlockDirectionalPathHelper,
+pub struct PostgresBlockDirectionalLinkRepository {
+    path_helper: PostgresBlockDirectionalPathHelper,
 }
 
-impl SqliteBlockDirectionalLinkRepository {
+impl PostgresBlockDirectionalLinkRepository {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
 #[async_trait]
-impl BlockDirectionalLinkRepository<Sqlite> for SqliteBlockDirectionalLinkRepository {
+impl BlockDirectionalLinkRepository<Postgres> for PostgresBlockDirectionalLinkRepository {
     async fn get_by_id<'e, E>(&self, id: Uuid, executor: E) -> Result<Option<BlockDirectionalLink>>
     where
-        E: Executor<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres>,
     {
-        let link = sqlx::query_as!(
-            BlockDirectionalLink,
-            r#"
-            SELECT 
-                id as "id: _" , 
-                block_from_id as "block_from_id: _",
-                block_to_id as "block_to_id: _",
-                created_at as "created_at: _"
-            FROM block_directional_links 
-            WHERE id = $1
-            "#,
-            id,
-        )
-        .fetch_optional(executor)
-        .await?;
-
+        let link = Self::get_by_id_with_executor(id, executor).await?;
         Ok(link)
     }
 
@@ -57,7 +42,7 @@ impl BlockDirectionalLinkRepository<Sqlite> for SqliteBlockDirectionalLinkReposi
         executor: E,
     ) -> Result<BlockDirectionalLink>
     where
-        E: Executor<'e, Database = Sqlite> + Acquire<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres> + Acquire<'e, Database = Postgres>,
     {
         let now = Utc::now();
 
@@ -74,10 +59,10 @@ impl BlockDirectionalLinkRepository<Sqlite> for SqliteBlockDirectionalLinkReposi
                 (id, block_from_id, block_to_id, created_at)
                 VALUES ($1, $2, $3, $4)
             RETURNING
-                id as "id: _",
-                block_from_id as "block_from_id: _",
-                block_to_id as "block_to_id: _",
-                created_at as "created_at: _"
+                id,
+                block_from_id,
+                block_to_id,
+                created_at
             "#,
             input.id,
             input.block_from_id,
@@ -112,7 +97,7 @@ impl BlockDirectionalLinkRepository<Sqlite> for SqliteBlockDirectionalLinkReposi
 
     async fn delete_by_id<'e, E>(&self, id: Uuid, executor: E) -> Result<()>
     where
-        E: Executor<'e, Database = Sqlite> + Acquire<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres> + Acquire<'e, Database = Postgres>,
     {
         let mut conn = executor.acquire().await?;
         let mut tx = conn.begin().await?;
@@ -142,7 +127,7 @@ impl BlockDirectionalLinkRepository<Sqlite> for SqliteBlockDirectionalLinkReposi
         executor: E,
     ) -> Result<()>
     where
-        E: Executor<'e, Database = Sqlite> + Acquire<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres> + Acquire<'e, Database = Postgres>,
     {
         let mut conn = executor.acquire().await?;
         let mut tx = conn.begin().await?;
@@ -172,7 +157,33 @@ impl BlockDirectionalLinkRepository<Sqlite> for SqliteBlockDirectionalLinkReposi
     }
 }
 
-impl SqliteBlockDirectionalLinkRepository {
+impl PostgresBlockDirectionalLinkRepository {
+    async fn get_by_id_with_executor<'c, E>(
+        id: Uuid,
+        executor: E,
+    ) -> Result<Option<BlockDirectionalLink>>
+    where
+        E: Executor<'c, Database = Postgres>,
+    {
+        let link = sqlx::query_as!(
+            BlockDirectionalLink,
+            r#"
+            SELECT
+                id,
+                block_from_id,
+                block_to_id,
+                created_at
+            FROM block_directional_links
+            WHERE id = $1
+            "#,
+            id,
+        )
+        .fetch_optional(executor)
+        .await?;
+
+        Ok(link)
+    }
+
     async fn ensure_no_cycle<'c, E>(
         &self,
         block_from_id: Uuid,
@@ -180,9 +191,8 @@ impl SqliteBlockDirectionalLinkRepository {
         executor: E,
     ) -> Result<()>
     where
-        E: Executor<'c, Database = Sqlite>,
+        E: Executor<'c, Database = Postgres>,
     {
-        // Check for self-link
         if block_from_id == block_to_id {
             return Err(BlockDirectionalLinkRepositoryError::CycleDetected {
                 from: block_from_id,
@@ -190,7 +200,6 @@ impl SqliteBlockDirectionalLinkRepository {
             });
         }
 
-        // Check for cycle
         let cycle_detected = self
             .path_helper
             .is_ancestor_descendant(block_to_id, block_from_id, executor)

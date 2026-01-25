@@ -1,26 +1,29 @@
 use std::collections::HashSet;
 
+use async_trait::async_trait;
 use chrono::Utc;
-use sqlx::{Executor, Sqlite, Transaction};
+use sqlx::{Acquire, Executor, Sqlite};
 use uuid::Uuid;
 
 use storage::helpers::block_directional_path_helper::{
-    BlockDirectionalPathHelperError, BlockDirectionalPathHelperResult as Result,
+    BlockDirectionalPathHelper, BlockDirectionalPathHelperError,
+    BlockDirectionalPathHelperResult as Result,
 };
 use storage::helpers::sqlx_error_kind_helpers::{is_foreign_key_violation, is_unique_violation};
 
-#[derive(Clone, Debug)]
-pub struct BlockDirectionalPathHelper;
+#[derive(Clone, Debug, Default)]
+pub struct SqliteBlockDirectionalPathHelper;
 
-impl BlockDirectionalPathHelper {
-    pub async fn is_ancestor_descendant<'c, E>(
+#[async_trait]
+impl BlockDirectionalPathHelper<Sqlite> for SqliteBlockDirectionalPathHelper {
+    async fn is_ancestor_descendant<'e, E>(
         &self,
         ancestor_id: Uuid,
         descendant_id: Uuid,
         executor: E,
     ) -> Result<bool>
     where
-        E: Executor<'c, Database = Sqlite>,
+        E: Executor<'e, Database = Sqlite>,
     {
         let count = sqlx::query_scalar!(
             "SELECT EXISTS (SELECT 1 FROM block_directional_paths
@@ -34,30 +37,36 @@ impl BlockDirectionalPathHelper {
         Ok(count > 0)
     }
 
-    pub async fn create_paths_for_new_link(
+    async fn create_paths_for_link<'e, E>(
         &self,
         from_id: Uuid,
         to_id: Uuid,
-        transaction: &mut Transaction<'_, Sqlite>,
-    ) -> Result<()> {
+        executor: E,
+    ) -> Result<()>
+    where
+        E: Executor<'e, Database = Sqlite> + Acquire<'e, Database = Sqlite>,
+    {
+        let mut conn = executor.acquire().await?;
+        let mut tx = conn.begin().await?;
+
         // Add direct path
         let direct_path = vec![from_id, to_id];
-        self.create_path(direct_path, transaction).await?;
+        self.create_path(direct_path, &mut *tx).await?;
 
         //  Extend all paths ending at from_id
-        let from_id_ancestor_paths = self.get_paths_to_block(from_id, &mut **transaction).await?;
+        let from_id_ancestor_paths = self.get_paths_to_block(from_id, &mut *tx).await?;
         for path in &from_id_ancestor_paths {
             let mut extended_path = path.clone();
             extended_path.push(to_id);
-            self.create_path(extended_path, transaction).await?;
+            self.create_path(extended_path, &mut *tx).await?;
         }
 
         // Extend all paths starting from to_id
-        let to_id_descendant_paths = self.get_paths_from_block(to_id, &mut **transaction).await?;
+        let to_id_descendant_paths = self.get_paths_from_block(to_id, &mut *tx).await?;
         for path in &to_id_descendant_paths {
             let mut extended_path = vec![from_id];
             extended_path.extend(path.iter());
-            self.create_path(extended_path, transaction).await?;
+            self.create_path(extended_path, &mut *tx).await?;
         }
 
         // Connect all ancestors of from_id to all descendants of to_id
@@ -65,19 +74,24 @@ impl BlockDirectionalPathHelper {
             for descendant_path in &to_id_descendant_paths {
                 let mut combined_path = ancestor_path.clone();
                 combined_path.extend(descendant_path.iter());
-                self.create_path(combined_path, transaction).await?;
+                self.create_path(combined_path, &mut *tx).await?;
             }
         }
+
+        tx.commit().await?;
 
         Ok(())
     }
 
-    pub async fn delete_paths_using_link(
+    async fn delete_paths_using_link<'e, E>(
         &self,
         from_id: Uuid,
         to_id: Uuid,
-        transaction: &mut Transaction<'_, Sqlite>,
-    ) -> Result<()> {
+        executor: E,
+    ) -> Result<()>
+    where
+        E: Executor<'e, Database = Sqlite>,
+    {
         // sqlx stores Uuid as BLOB to sqlite by default (even if it is configured as TEXT type)
         // So we need to manually convert Uuid to string to match the format in paths
         let from_id_str = from_id.to_string();
@@ -99,17 +113,16 @@ impl BlockDirectionalPathHelper {
             from_id_str,
             to_id_str,
         )
-        .execute(&mut **transaction)
+        .execute(executor)
         .await?;
 
         Ok(())
     }
 
-    pub async fn delete_paths_using_block(
-        &self,
-        block_id: Uuid,
-        transaction: &mut Transaction<'_, Sqlite>,
-    ) -> Result<()> {
+    async fn delete_paths_using_block<'e, E>(&self, block_id: Uuid, executor: E) -> Result<()>
+    where
+        E: Executor<'e, Database = Sqlite>,
+    {
         // sqlx stores Uuid as BLOB to sqlite by default (even if it is configured as TEXT type)
         // So we need to manually convert Uuid to string to match the format in paths
         let block_id_str = block_id.to_string();
@@ -122,21 +135,21 @@ impl BlockDirectionalPathHelper {
             )",
             block_id_str
         )
-        .execute(&mut **transaction)
+        .execute(executor)
         .await?;
 
         Ok(())
     }
 }
 
-impl BlockDirectionalPathHelper {
-    async fn get_paths_from_block<'c, E>(
+impl SqliteBlockDirectionalPathHelper {
+    async fn get_paths_from_block<'e, E>(
         &self,
         block_id: Uuid,
         executor: E,
     ) -> Result<Vec<Vec<Uuid>>>
     where
-        E: Executor<'c, Database = Sqlite>,
+        E: Executor<'e, Database = Sqlite>,
     {
         let path_strs = sqlx::query_scalar!(
             "SELECT block_path_ids from block_directional_paths
@@ -156,13 +169,9 @@ impl BlockDirectionalPathHelper {
         Ok(paths)
     }
 
-    pub async fn get_paths_to_block<'c, E>(
-        &self,
-        block_id: Uuid,
-        executor: E,
-    ) -> Result<Vec<Vec<Uuid>>>
+    async fn get_paths_to_block<'e, E>(&self, block_id: Uuid, executor: E) -> Result<Vec<Vec<Uuid>>>
     where
-        E: Executor<'c, Database = Sqlite>,
+        E: Executor<'e, Database = Sqlite>,
     {
         let path_strs = sqlx::query_scalar!(
             "SELECT block_path_ids from block_directional_paths
@@ -182,11 +191,10 @@ impl BlockDirectionalPathHelper {
         Ok(paths)
     }
 
-    async fn create_path(
-        &self,
-        path_ids: Vec<Uuid>,
-        transaction: &mut Transaction<'_, Sqlite>,
-    ) -> Result<()> {
+    async fn create_path<'e, E>(&self, path_ids: Vec<Uuid>, executor: E) -> Result<()>
+    where
+        E: Executor<'e, Database = Sqlite>,
+    {
         self.ensure_nonempty_path(&path_ids)?;
         self.ensure_noncyclic_path(&path_ids)?;
 
@@ -209,7 +217,7 @@ impl BlockDirectionalPathHelper {
             path_len,
             now,
         )
-        .execute(&mut **transaction)
+        .execute(executor)
         .await
         .map_err(|e| {
             if is_foreign_key_violation(&e) {

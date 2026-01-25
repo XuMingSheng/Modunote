@@ -8,6 +8,9 @@ pub enum DatabaseError {
 
     #[error("IO error: {0}")]
     Io(#[from] std::io::Error),
+
+    #[error("Enviroment varable error {0}")]
+    Var(#[from] std::env::VarError),
 }
 
 pub type DatabaseResult<T> = Result<T, DatabaseError>;

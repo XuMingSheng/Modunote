@@ -1,44 +1,43 @@
 use async_trait::async_trait;
 use chrono::Utc;
-use sqlx::{Acquire, Executor, Sqlite};
+use sqlx::{Acquire, Executor, Postgres};
 use uuid::Uuid;
 
-use crate::helpers::SqliteBlockDirectionalPathHelper;
+use crate::helpers::PostgresBlockDirectionalPathHelper;
 use domain::blocks::Block;
 use storage::helpers::block_directional_path_helper::BlockDirectionalPathHelper;
-use storage::repositories::BlockRepository;
 use storage::repositories::block_repository::{
-    BlockRepositoryError, BlockRepostoryResult as Result,
+    BlockRepository, BlockRepositoryError, BlockRepostoryResult as Result,
 };
 
 #[derive(Clone, Debug, Default)]
-pub struct SqliteBlockRepository {
-    path_helper: SqliteBlockDirectionalPathHelper,
+pub struct PostgresBlockRepository {
+    path_helper: PostgresBlockDirectionalPathHelper,
 }
 
-impl SqliteBlockRepository {
+impl PostgresBlockRepository {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
 #[async_trait]
-impl BlockRepository<Sqlite> for SqliteBlockRepository {
+impl BlockRepository<Postgres> for PostgresBlockRepository {
     async fn get_by_id<'e, E>(&self, id: Uuid, executor: E) -> Result<Option<Block>>
     where
-        E: Executor<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres>,
     {
         let block = sqlx::query_as!(
             Block,
-            r#"SELECT 
-                id as "id: _" , 
-                title, 
-                content, 
-                created_at as "created_at: _", 
-                updated_at as "updated_at: _" 
-            FROM blocks 
+            r#"SELECT
+                id,
+                title,
+                content,
+                created_at,
+                updated_at
+            FROM blocks
             WHERE id = $1"#,
-            id,
+            id
         )
         .fetch_optional(executor)
         .await?;
@@ -48,7 +47,7 @@ impl BlockRepository<Sqlite> for SqliteBlockRepository {
 
     async fn delete_by_id<'e, E>(&self, id: Uuid, executor: E) -> Result<()>
     where
-        E: Executor<'e, Database = Sqlite> + Acquire<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres> + Acquire<'e, Database = Postgres>,
     {
         let mut conn = executor.acquire().await?;
         let mut tx = conn.begin().await?;
@@ -72,14 +71,21 @@ impl BlockRepository<Sqlite> for SqliteBlockRepository {
 
     async fn save<'e, E>(&self, block: &Block, executor: E) -> Result<()>
     where
-        E: Executor<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres>,
     {
         let now = Utc::now();
 
         sqlx::query!(
-            "INSERT OR REPLACE INTO blocks 
+            r#"
+            INSERT INTO blocks
                 (id, title, content, created_at, updated_at)
-                VALUES ($1, $2, $3, $4, $5)",
+                VALUES ($1, $2, $3, $4, $5)
+            ON CONFLICT (id) DO UPDATE SET
+                title = EXCLUDED.title,
+                content = EXCLUDED.content,
+                created_at = EXCLUDED.created_at,
+                updated_at = EXCLUDED.updated_at
+            "#,
             block.id,
             block.title,
             block.content,

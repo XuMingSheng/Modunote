@@ -18,12 +18,10 @@ pub struct BlockDirectionalLink {
 }
 
 impl BlockDirectionalLink {
-    pub fn new(
-        id: Uuid,
-        block_from_id: Uuid,
-        block_to_id: Uuid,
-        created_at: DateTime<Utc>,
-    ) -> Result<Self, BlockDirectionalLinkError> {
+    pub fn new(block_from_id: Uuid, block_to_id: Uuid) -> Result<Self, BlockDirectionalLinkError> {
+        let id = Uuid::new_v4();
+        let now = Utc::now();
+
         if block_from_id == block_to_id {
             return Err(BlockDirectionalLinkError::SameBlockIds {
                 block_id: block_from_id,
@@ -34,7 +32,7 @@ impl BlockDirectionalLink {
             id,
             block_from_id,
             block_to_id,
-            created_at,
+            created_at: now,
         })
     }
 }

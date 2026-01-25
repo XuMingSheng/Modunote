@@ -9,3 +9,17 @@ pub struct Block {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
+
+impl Block {
+    pub fn new(title: &str, content: &str) -> Self {
+        let now = Utc::now();
+
+        Self {
+            id: Uuid::new_v4(),
+            title: title.to_string(),
+            content: content.to_string(),
+            created_at: now,
+            updated_at: now,
+        }
+    }
+}
