@@ -13,10 +13,13 @@ install:
     cargo fetch
 
 postgres-dev-up:
-  {{compose}} up -d postgres_dev
+  {{compose}} up -d 
+  
+postgres-dev-down:
+  {{compose}} rm -sf postgres_test
 
 postgres-dev-reset:
-  {{compose}} rm -sf postgres_test
+  {{compose}} rm -sf postgres_dev
   docker volume rm {{compose_project}}_postgres_dev_data
 
 postgres-test-up:

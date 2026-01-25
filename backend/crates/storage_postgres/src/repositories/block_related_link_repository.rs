@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use chrono::Utc;
-use sqlx::{Acquire, Executor, Sqlite};
+use sqlx::{Acquire, Executor, Postgres};
 use uuid::Uuid;
 
 use domain::blocks::BlockRelatedLink;
@@ -11,29 +11,29 @@ use storage::repositories::block_related_link_repository::{
 };
 
 #[derive(Clone, Debug, Default)]
-pub struct SqliteBlockRelatedLinkRepository {}
+pub struct PostgresBlockRelatedLinkRepository {}
 
-impl SqliteBlockRelatedLinkRepository {
+impl PostgresBlockRelatedLinkRepository {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
 #[async_trait]
-impl BlockRelatedLinkRepository<Sqlite> for SqliteBlockRelatedLinkRepository {
+impl BlockRelatedLinkRepository<Postgres> for PostgresBlockRelatedLinkRepository {
     async fn get_by_id<'e, E>(&self, id: Uuid, executor: E) -> Result<Option<BlockRelatedLink>>
     where
-        E: Executor<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres>,
     {
         let link = sqlx::query_as!(
             BlockRelatedLink,
             r#"
-            SELECT 
-                id as "id: _" , 
-                block_a_id as "block_a_id: _",
-                block_b_id as "block_b_id: _",
-                created_at as "created_at: _"
-            FROM block_related_links 
+            SELECT
+                id,
+                block_a_id,
+                block_b_id,
+                created_at
+            FROM block_related_links
             WHERE id = $1
             "#,
             id,
@@ -50,7 +50,7 @@ impl BlockRelatedLinkRepository<Sqlite> for SqliteBlockRelatedLinkRepository {
         executor: E,
     ) -> Result<BlockRelatedLink>
     where
-        E: Executor<'e, Database = Sqlite> + Acquire<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres> + Acquire<'e, Database = Postgres>,
     {
         let now = Utc::now();
 
@@ -63,12 +63,12 @@ impl BlockRelatedLinkRepository<Sqlite> for SqliteBlockRelatedLinkRepository {
             r#"
             INSERT INTO block_related_links
                 (id, block_a_id, block_b_id, created_at)
-                VALUES ($1, $2, $3, $4)
+            VALUES ($1, $2, $3, $4)
             RETURNING
-                id as "id: _",
-                block_a_id as "block_a_id: _",
-                block_b_id as "block_b_id: _",
-                created_at as "created_at: _"
+                id,
+                block_a_id,
+                block_b_id,
+                created_at
             "#,
             input.id,
             block_a_id,
@@ -97,7 +97,7 @@ impl BlockRelatedLinkRepository<Sqlite> for SqliteBlockRelatedLinkRepository {
 
     async fn delete_by_id<'e, E>(&self, id: Uuid, executor: E) -> Result<()>
     where
-        E: Executor<'e, Database = Sqlite> + Acquire<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres> + Acquire<'e, Database = Postgres>,
     {
         let result = sqlx::query!("DELETE FROM block_related_links WHERE id = $1", id)
             .execute(executor)
@@ -106,6 +106,7 @@ impl BlockRelatedLinkRepository<Sqlite> for SqliteBlockRelatedLinkRepository {
         if result.rows_affected() == 0 {
             return Err(BlockRelatedLinkError::NotFoundById { id });
         }
+
         Ok(())
     }
 
@@ -116,7 +117,7 @@ impl BlockRelatedLinkRepository<Sqlite> for SqliteBlockRelatedLinkRepository {
         executor: E,
     ) -> Result<()>
     where
-        E: Executor<'e, Database = Sqlite> + Acquire<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres> + Acquire<'e, Database = Postgres>,
     {
         let (block_a_id, block_b_id) = Self::ordered_ids(block_a_id, block_b_id);
 
@@ -134,11 +135,12 @@ impl BlockRelatedLinkRepository<Sqlite> for SqliteBlockRelatedLinkRepository {
                 b: block_b_id,
             });
         }
+
         Ok(())
     }
 }
 
-impl SqliteBlockRelatedLinkRepository {
+impl PostgresBlockRelatedLinkRepository {
     fn ensure_no_selflink(block_a_id: Uuid, block_b_id: Uuid) -> Result<()> {
         if block_a_id == block_b_id {
             return Err(BlockRelatedLinkError::SelfLink { id: block_a_id });
