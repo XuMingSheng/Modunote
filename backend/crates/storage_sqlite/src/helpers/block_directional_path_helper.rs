@@ -14,6 +14,12 @@ use storage::helpers::sqlx_error_kind_helpers::{is_foreign_key_violation, is_uni
 #[derive(Clone, Debug, Default)]
 pub struct SqliteBlockDirectionalPathHelper;
 
+impl SqliteBlockDirectionalPathHelper {
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
+
 #[async_trait]
 impl BlockDirectionalPathHelper<Sqlite> for SqliteBlockDirectionalPathHelper {
     async fn is_ancestor_descendant<'e, E>(

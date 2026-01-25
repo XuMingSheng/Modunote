@@ -13,6 +13,12 @@ use uuid::Uuid;
 #[derive(Clone, Debug, Default)]
 pub struct PostgresBlockDirectionalPathHelper;
 
+impl PostgresBlockDirectionalPathHelper {
+    pub fn new() -> Self {
+        Default::default()
+    }
+}
+
 #[async_trait]
 impl BlockDirectionalPathHelper<Postgres> for PostgresBlockDirectionalPathHelper {
     async fn is_ancestor_descendant<'e, E>(

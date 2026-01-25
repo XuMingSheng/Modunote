@@ -1,5 +1,5 @@
 mod database;
-mod helpers;
+pub mod helpers;
 
 pub mod repositories;
 
