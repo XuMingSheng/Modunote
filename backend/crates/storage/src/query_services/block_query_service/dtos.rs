@@ -9,12 +9,11 @@ pub struct BlockSummaryDto {
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
     pub opened_at: Option<DateTime<Utc>>,
-    pub pinned_at: Option<DateTime<Utc>>,
 }
 
 pub struct OpenedBlockDto {
     pub id: Uuid,
     pub title: String,
     pub opened_at: DateTime<Utc>,
-    pub tab_order: u32,
+    pub tab_index: u32,
 }

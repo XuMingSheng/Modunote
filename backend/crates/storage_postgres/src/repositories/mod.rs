@@ -1,7 +1,9 @@
 mod block_directional_link_repository;
 mod block_repository;
 mod block_related_link_repository;
+mod workspace_repository;
 
 pub use block_directional_link_repository::PostgresBlockDirectionalLinkRepository;
 pub use block_repository::PostgresBlockRepository;
 pub use block_related_link_repository::PostgresBlockRelatedLinkRepository;
+pub use workspace_repository::PostgresWorkspaceRepository;

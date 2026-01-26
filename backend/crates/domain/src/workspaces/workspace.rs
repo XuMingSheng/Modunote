@@ -6,26 +6,34 @@ use uuid::Uuid;
 pub struct OpenedBlock {
     pub block_id: Uuid,
     pub opened_at: DateTime<Utc>,
-    pub tab_order: u32,
+    pub tab_index: usize,
 }
 
-#[derive(Clone, Serialize, Deserialize, Debug)]
+#[derive(Clone, Serialize, Deserialize, Debug, Default)]
 pub struct Workspace {
     pub opened_blocks: Vec<OpenedBlock>,
 }
 
 impl Workspace {
+    pub fn new() -> Self {
+        Default::default()
+    }
+
+    pub fn is_block_opened(&self, block_id: Uuid) -> bool {
+        self.find_opened_block_index(block_id).is_some()
+    }
+
     pub fn open_block(&mut self, block_id: Uuid) {
-        if self.find_opened_block_index(block_id).is_some() {
+        if self.is_block_opened(block_id) {
             return;
         }
 
-        let next_order = (self.opened_blocks.len() + 1) as u32;
+        let next_index = self.opened_blocks.len() + 1;
 
         let new_opened_block = OpenedBlock {
             block_id,
             opened_at: Utc::now(),
-            tab_order: next_order,
+            tab_index: next_index,
         };
 
         self.opened_blocks.push(new_opened_block)
@@ -38,7 +46,7 @@ impl Workspace {
 
         self.opened_blocks.remove(index);
 
-        self.compact_opened_block_orders();
+        self.compact_opened_block_indices();
     }
 }
 
@@ -49,9 +57,68 @@ impl Workspace {
             .position(|b| b.block_id == block_id)
     }
 
-    fn compact_opened_block_orders(&mut self) {
+    fn compact_opened_block_indices(&mut self) {
         for (index, block) in self.opened_blocks.iter_mut().enumerate() {
-            block.tab_order = index as u32;
+            block.tab_index = index;
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Workspace;
+    use uuid::Uuid;
+
+    #[test]
+    fn open_block_adds_unique_entries() {
+        let mut workspace = Workspace {
+            opened_blocks: Vec::new(),
+        };
+
+        let first = Uuid::new_v4();
+        let second = Uuid::new_v4();
+
+        workspace.open_block(first);
+        workspace.open_block(second);
+        workspace.open_block(first);
+
+        assert_eq!(workspace.opened_blocks.len(), 2);
+        assert_eq!(workspace.opened_blocks[0].block_id, first);
+        assert_eq!(workspace.opened_blocks[1].block_id, second);
+    }
+
+    #[test]
+    fn close_block_removes_and_compacts_orders() {
+        let mut workspace = Workspace {
+            opened_blocks: Vec::new(),
+        };
+
+        let first = Uuid::new_v4();
+        let second = Uuid::new_v4();
+
+        workspace.open_block(first);
+        workspace.open_block(second);
+
+        workspace.close_block(first);
+
+        assert_eq!(workspace.opened_blocks.len(), 1);
+        assert_eq!(workspace.opened_blocks[0].block_id, second);
+        assert_eq!(workspace.opened_blocks[0].tab_index, 0);
+    }
+
+    #[test]
+    fn close_block_missing_is_noop() {
+        let mut workspace = Workspace {
+            opened_blocks: Vec::new(),
+        };
+
+        let existing = Uuid::new_v4();
+        let missing = Uuid::new_v4();
+
+        workspace.open_block(existing);
+        workspace.close_block(missing);
+
+        assert_eq!(workspace.opened_blocks.len(), 1);
+        assert_eq!(workspace.opened_blocks[0].block_id, existing);
     }
 }

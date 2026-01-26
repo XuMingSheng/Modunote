@@ -27,7 +27,7 @@ impl BlockQueryService for SqliteBlockQueryService {
                 b.id as "id: _", 
                 b.title, 
                 bo.opened_at as "opened_at: _",
-                bo.tab_order as "tab_order: _"
+                bo.tab_index as "tab_index: _"
             FROM block_opens bo
             JOIN blocks b on b.id = bo.block_id
             ORDER BY bo.tab_order ASC

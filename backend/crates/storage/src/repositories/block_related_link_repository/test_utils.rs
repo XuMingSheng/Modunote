@@ -31,7 +31,7 @@ fn ordered_ids(block_a_id: Uuid, block_b_id: Uuid) -> (Uuid, Uuid) {
     }
 }
 
-pub async fn assert_create_get_delete<'e, A, L, B, DB>(
+pub async fn assert_create_get_delete<'a, A, L, B, DB>(
     link_repo: &L,
     block_repo: &B,
     conn: A,
@@ -40,7 +40,7 @@ where
     DB: Database,
     L: BlockRelatedLinkRepository<DB>,
     B: BlockRepository<DB>,
-    A: Acquire<'e, Database = DB>,
+    A: Acquire<'a, Database = DB>,
     for<'c> &'c mut DB::Connection: Executor<'c, Database = DB> + Acquire<'c, Database = DB>,
 {
     let mut conn = conn.acquire().await?;
@@ -75,7 +75,7 @@ where
     Ok(())
 }
 
-pub async fn assert_delete_by_block_ids<'e, A, L, B, DB>(
+pub async fn assert_delete_by_block_ids<'a, A, L, B, DB>(
     link_repo: &L,
     block_repo: &B,
     conn: A,
@@ -84,7 +84,7 @@ where
     DB: Database,
     L: BlockRelatedLinkRepository<DB>,
     B: BlockRepository<DB>,
-    A: Acquire<'e, Database = DB>,
+    A: Acquire<'a, Database = DB>,
     for<'c> &'c mut DB::Connection: Executor<'c, Database = DB> + Acquire<'c, Database = DB>,
 {
     let mut conn = conn.acquire().await?;
@@ -110,11 +110,11 @@ where
     Ok(())
 }
 
-pub async fn assert_delete_missing<'e, A, L, DB>(link_repo: &L, conn: A) -> Result<()>
+pub async fn assert_delete_missing<'a, A, L, DB>(link_repo: &L, conn: A) -> Result<()>
 where
     DB: Database,
     L: BlockRelatedLinkRepository<DB>,
-    A: Acquire<'e, Database = DB>,
+    A: Acquire<'a, Database = DB>,
     for<'c> &'c mut DB::Connection: Executor<'c, Database = DB> + Acquire<'c, Database = DB>,
 {
     let mut conn = conn.acquire().await?;
@@ -138,11 +138,11 @@ where
     Ok(())
 }
 
-pub async fn assert_delete_by_blocks_missing<'e, A, L, DB>(link_repo: &L, conn: A) -> Result<()>
+pub async fn assert_delete_by_blocks_missing<'a, A, L, DB>(link_repo: &L, conn: A) -> Result<()>
 where
     DB: Database,
     L: BlockRelatedLinkRepository<DB>,
-    A: Acquire<'e, Database = DB>,
+    A: Acquire<'a, Database = DB>,
     for<'c> &'c mut DB::Connection: Executor<'c, Database = DB> + Acquire<'c, Database = DB>,
 {
     let mut conn = conn.acquire().await?;
@@ -170,12 +170,12 @@ where
     Ok(())
 }
 
-pub async fn assert_self_link<'e, A, L, B, DB>(link_repo: &L, block_repo: &B, conn: A) -> Result<()>
+pub async fn assert_self_link<'a, A, L, B, DB>(link_repo: &L, block_repo: &B, conn: A) -> Result<()>
 where
     DB: Database,
     L: BlockRelatedLinkRepository<DB>,
     B: BlockRepository<DB>,
-    A: Acquire<'e, Database = DB>,
+    A: Acquire<'a, Database = DB>,
     for<'c> &'c mut DB::Connection: Executor<'c, Database = DB> + Acquire<'c, Database = DB>,
 {
     let mut conn = conn.acquire().await?;
@@ -205,12 +205,12 @@ where
     Ok(())
 }
 
-pub async fn assert_duplicate<'e, A, L, B, DB>(link_repo: &L, block_repo: &B, conn: A) -> Result<()>
+pub async fn assert_duplicate<'a, A, L, B, DB>(link_repo: &L, block_repo: &B, conn: A) -> Result<()>
 where
     DB: Database,
     L: BlockRelatedLinkRepository<DB>,
     B: BlockRepository<DB>,
-    A: Acquire<'e, Database = DB>,
+    A: Acquire<'a, Database = DB>,
     for<'c> &'c mut DB::Connection: Executor<'c, Database = DB> + Acquire<'c, Database = DB>,
 {
     let mut conn = conn.acquire().await?;

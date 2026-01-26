@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use sqlx::{Acquire, Executor, Sqlite};
+use sqlx::{Acquire, Executor, Postgres};
 use uuid::Uuid;
 
 use domain::workspaces::workspace::{OpenedBlock, Workspace};
@@ -27,27 +27,27 @@ impl From<OpenedBlockModel> for OpenedBlock {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct SqliteWorkspaceRepository {}
+pub struct PostgresWorkspaceRepository {}
 
-impl SqliteWorkspaceRepository {
+impl PostgresWorkspaceRepository {
     pub fn new() -> Self {
         Self::default()
     }
 }
 
 #[async_trait]
-impl WorkspaceRepository<Sqlite> for SqliteWorkspaceRepository {
+impl WorkspaceRepository<Postgres> for PostgresWorkspaceRepository {
     async fn get<'e, E>(&self, executor: E) -> Result<Workspace>
     where
-        E: Executor<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres>,
     {
-        let opened_blocks = sqlx::query_as!(
+        let opened_blocks: Vec<OpenedBlock> = sqlx::query_as!(
             OpenedBlockModel,
             r#"
             SELECT
-                block_id as "block_id: _",
-                opened_at as "opened_at: _",
-                tab_index as "tab_index: _"
+                block_id,
+                opened_at,
+                tab_index
             FROM block_opens
             "#
         )
@@ -57,14 +57,12 @@ impl WorkspaceRepository<Sqlite> for SqliteWorkspaceRepository {
         .map(OpenedBlock::from)
         .collect();
 
-        let workspace = Workspace { opened_blocks };
-
-        Ok(workspace)
+        Ok(Workspace { opened_blocks })
     }
 
     async fn save<'e, E>(&self, workspace: &Workspace, executor: E) -> Result<()>
     where
-        E: Executor<'e, Database = Sqlite> + Acquire<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres> + Acquire<'e, Database = Postgres>,
     {
         let mut conn = executor.acquire().await?;
         let mut tx = conn.begin().await?;
@@ -74,7 +72,6 @@ impl WorkspaceRepository<Sqlite> for SqliteWorkspaceRepository {
             .await?;
 
         for opened_block in &workspace.opened_blocks {
-            let tab_index = opened_block.tab_index as i32;
             sqlx::query!(
                 r#"
                 INSERT INTO block_opens (block_id, opened_at, tab_index)
@@ -82,7 +79,7 @@ impl WorkspaceRepository<Sqlite> for SqliteWorkspaceRepository {
                 "#,
                 opened_block.block_id,
                 opened_block.opened_at,
-                tab_index
+                opened_block.tab_index as i32
             )
             .execute(&mut *tx)
             .await

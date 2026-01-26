@@ -19,4 +19,4 @@ storage = { path = "../storage"}
 [dev-dependencies]
 tokio = { version = "1.38", features = ["full"] }
 storage = { path = "../storage", features = ["test-utils"] }
-rstest = "0.26.1"
+rstest = { workspace = true }
