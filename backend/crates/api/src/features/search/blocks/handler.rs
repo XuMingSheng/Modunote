@@ -24,7 +24,7 @@ pub async fn search_blocks(
     let blocks = state
         .query_services
         .blocks
-        .search(&request.query)
+        .search(&request.query, state.db.pool())
         .await
         .map_err(|e| {
             error!("Failed to search blocks by '{}': {e}", request.query);

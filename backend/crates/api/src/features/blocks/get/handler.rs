@@ -42,7 +42,7 @@ pub async fn get_block(
     let linked_blocks = state
         .query_services
         .block_links
-        .get_linked_blocks(id)
+        .get_linked_blocks(id, state.db.pool())
         .await
         .map_err(|e| {
             error!("Failed to get linked blocks, {id}, {e}");

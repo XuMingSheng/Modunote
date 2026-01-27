@@ -23,7 +23,7 @@ pub async fn get_opened_blocks(
     let opened_blocks = state
         .query_services
         .blocks
-        .get_opened()
+        .get_opened(state.db.pool())
         .await
         .map_err(|e| {
             error!("Failed to get opened blocks {e}");

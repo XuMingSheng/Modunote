@@ -32,8 +32,8 @@ pub struct QueryServices {
 impl QueryServices {
     pub fn new(db: &DatabaseImpl) -> Self {
         Self {
-            blocks: BlockQueryServiceImpl::new(db.pool()),
-            block_links: BlockLinkQueryServiceImpl::new(db.pool()),
+            blocks: BlockQueryServiceImpl::new(),
+            block_links: BlockLinkQueryServiceImpl::new(),
         }
     }
 }

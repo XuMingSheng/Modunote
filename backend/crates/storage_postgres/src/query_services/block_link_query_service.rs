@@ -1,6 +1,6 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
-use sqlx::{Executor, Sqlite};
+use sqlx::{Executor, Postgres};
 use uuid::Uuid;
 
 use storage::query_services::BlockLinkQueryService;
@@ -38,23 +38,23 @@ impl From<&LinkedBlockModel> for LinkedBlockDto {
 }
 
 #[derive(Clone, Debug, Default)]
-pub struct SqliteBlockLinkQueryService;
+pub struct PostgresBlockLinkQueryService;
 
-impl SqliteBlockLinkQueryService {
+impl PostgresBlockLinkQueryService {
     pub fn new() -> Self {
         Default::default()
     }
 }
 
 #[async_trait]
-impl BlockLinkQueryService<Sqlite> for SqliteBlockLinkQueryService {
+impl BlockLinkQueryService<Postgres> for PostgresBlockLinkQueryService {
     async fn get_linked_blocks<'e, E>(
         &self,
         block_id: Uuid,
         executor: E,
     ) -> Result<AllLinkedBlocksDto>
     where
-        E: Executor<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres>,
     {
         // SQLx primarily looks at the first SELECT for the schema definition.
         let linked_blocks = sqlx::query_as!(
@@ -62,11 +62,11 @@ impl BlockLinkQueryService<Sqlite> for SqliteBlockLinkQueryService {
             r#"
             SELECT
                 'parent' as "link_type!: LinkType ",
-                bdl.id as "link_id: _",
-                b.id as "block_id: _",
-                b.title,
-                b.created_at as "created_at: _",
-                b.updated_at as "updated_at: _"
+                bdl.id as "link_id!",
+                b.id as "block_id!",
+                b.title as "title!",
+                b.created_at as "created_at!",
+                b.updated_at as "updated_at!"
             FROM block_directional_links bdl
             JOIN blocks b ON b.id = bdl.block_from_id
             WHERE bdl.block_to_id = $1
@@ -128,7 +128,7 @@ impl BlockLinkQueryService<Sqlite> for SqliteBlockLinkQueryService {
         executor: E,
     ) -> Result<Vec<LinkedBlockDto>>
     where
-        E: Executor<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres>,
     {
         let parent_blocks = sqlx::query_as!(
             LinkedBlockDto,
@@ -137,8 +137,8 @@ impl BlockLinkQueryService<Sqlite> for SqliteBlockLinkQueryService {
                 bdl.id as "link_id: _",
                 b.id as "block_id: _",
                 b.title,
-                b.created_at as "created_at: _",
-                b.updated_at as "updated_at: _"
+                b.created_at,
+                b.updated_at
             FROM block_directional_links bdl
             JOIN blocks b ON b.id = bdl.block_from_id
             WHERE bdl.block_to_id = $1
@@ -157,7 +157,7 @@ impl BlockLinkQueryService<Sqlite> for SqliteBlockLinkQueryService {
         executor: E,
     ) -> Result<Vec<LinkedBlockDto>>
     where
-        E: Executor<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres>,
     {
         let child_blocks = sqlx::query_as!(
             LinkedBlockDto,
@@ -166,8 +166,8 @@ impl BlockLinkQueryService<Sqlite> for SqliteBlockLinkQueryService {
                 bdl.id as "link_id: _",
                 b.id as "block_id: _",
                 b.title,
-                b.created_at as "created_at: _",
-                b.updated_at as "updated_at: _"
+                b.created_at,
+                b.updated_at
             FROM block_directional_links bdl
             JOIN blocks b ON b.id = bdl.block_to_id
             WHERE bdl.block_from_id = $1
@@ -186,7 +186,7 @@ impl BlockLinkQueryService<Sqlite> for SqliteBlockLinkQueryService {
         executor: E,
     ) -> Result<Vec<LinkedBlockDto>>
     where
-        E: Executor<'e, Database = Sqlite>,
+        E: Executor<'e, Database = Postgres>,
     {
         let related_blocks = sqlx::query_as!(
             LinkedBlockDto,
@@ -195,8 +195,8 @@ impl BlockLinkQueryService<Sqlite> for SqliteBlockLinkQueryService {
                 brl.id as "link_id: _",
                 b.id as "block_id: _",
                 b.title,
-                b.created_at as "created_at: _",
-                b.updated_at as "updated_at: _"
+                b.created_at,
+                b.updated_at
             FROM block_related_links brl
             JOIN blocks b ON (
                 (brl.block_a_id = $1 AND b.id = brl.block_b_id) OR 

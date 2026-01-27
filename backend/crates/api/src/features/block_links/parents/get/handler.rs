@@ -33,7 +33,7 @@ pub async fn get_block_parent_links(
     let links = state
         .query_services
         .block_links
-        .get_parent_blocks(id)
+        .get_parent_blocks(id, state.db.pool())
         .await
         .map_err(|e| {
             error!("Failed to get parent links of block {id}: {e}");

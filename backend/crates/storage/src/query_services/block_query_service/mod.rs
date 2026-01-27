@@ -5,3 +5,6 @@ mod traits;
 pub use dtos::*;
 pub use error::{BlockQueryServiceError, BlockQueryServiceResult};
 pub use traits::BlockQueryService;
+
+#[cfg(feature = "test-utils")]
+pub mod test_utils;
