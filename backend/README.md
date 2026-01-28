@@ -11,8 +11,12 @@ Run commands from `backend/`. `COMPOSE_PROJECT_NAME` defaults to `backend`.
 ### Postgres
 
 - `just postgres-dev-up`
-- `just migrate-postgres`
+- `just migrate-postgres-dev`
 - `just postgres-dev-reset`
+
+## Build
+
+- `just build` to run `sqlx prepare` for both DB crates (uses the dev DB URLs) and compile.
 
 ## Tests
 

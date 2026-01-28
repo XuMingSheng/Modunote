@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use sqlx::{Acquire, Executor, Sqlite};
 use uuid::Uuid;
 
-use domain::workspaces::workspace::{OpenedBlock, Workspace};
+use domain::workspaces::{OpenedBlock, Workspace};
 use storage::helpers::sqlx_error_kind_helpers::is_foreign_key_violation;
 use storage::repositories::WorkspaceRepository;
 use storage::repositories::workspace_repository::{

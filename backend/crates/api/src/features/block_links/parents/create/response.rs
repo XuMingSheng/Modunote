@@ -1,3 +1,8 @@
+use axum::{
+    Json,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use utoipa::ToSchema;
@@ -22,5 +27,11 @@ impl From<BlockDirectionalLink> for CreateBlockParentLinkResponse {
             block_to_id: link.block_to_id,
             created_at: link.created_at,
         }
+    }
+}
+
+impl IntoResponse for CreateBlockParentLinkResponse {
+    fn into_response(self) -> Response {
+        (StatusCode::CREATED, Json(self)).into_response()
     }
 }

@@ -1,4 +1,8 @@
-use serde;
+use axum::{
+    Json,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -32,5 +36,11 @@ impl From<Vec<BlockSummaryDto>> for BlockSearchResponse {
         Self {
             blocks: blocks.into_iter().map(|b| b.into()).collect(),
         }
+    }
+}
+
+impl IntoResponse for BlockSearchResponse {
+    fn into_response(self) -> Response {
+        (StatusCode::OK, Json(self)).into_response()
     }
 }

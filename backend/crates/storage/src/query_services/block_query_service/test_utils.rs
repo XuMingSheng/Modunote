@@ -2,7 +2,7 @@ use chrono::{Duration, Utc};
 use sqlx::{Acquire, Database, Executor};
 
 use domain::blocks::Block;
-use domain::workspaces::workspace::{OpenedBlock, Workspace};
+use domain::workspaces::{OpenedBlock, Workspace};
 
 use super::BlockQueryServiceResult as Result;
 use crate::query_services::BlockQueryService;

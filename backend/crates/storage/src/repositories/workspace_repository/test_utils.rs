@@ -4,7 +4,7 @@ use chrono::{DateTime, Utc};
 use uuid::Uuid;
 
 use domain::blocks::Block;
-use domain::workspaces::workspace::{OpenedBlock, Workspace};
+use domain::workspaces::{OpenedBlock, Workspace};
 use sqlx::{Acquire, Database, Executor};
 
 use crate::repositories::block_repository::BlockRepository;

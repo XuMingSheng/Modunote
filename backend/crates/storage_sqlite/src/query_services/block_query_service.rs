@@ -1,10 +1,30 @@
 use async_trait::async_trait;
+use chrono::{DateTime, Utc};
 use sqlx::{Executor, Sqlite};
+use uuid::Uuid;
 
 use storage::query_services::BlockQueryService;
 use storage::query_services::block_query_service::{
     BlockQueryServiceResult as Result, BlockSummaryDto, OpenedBlockDto,
 };
+
+struct OpenedBlockModel {
+    id: Uuid,
+    title: String,
+    opened_at: DateTime<Utc>,
+    tab_index: i32,
+}
+
+impl From<OpenedBlockModel> for OpenedBlockDto {
+    fn from(model: OpenedBlockModel) -> Self {
+        Self {
+            id: model.id,
+            title: model.title,
+            opened_at: model.opened_at,
+            tab_index: model.tab_index as usize,
+        }
+    }
+}
 
 #[derive(Clone, Debug, Default)]
 pub struct SqliteBlockQueryService;
@@ -22,7 +42,7 @@ impl BlockQueryService<Sqlite> for SqliteBlockQueryService {
         E: Executor<'e, Database = Sqlite>,
     {
         let opened_blocks = sqlx::query_as!(
-            OpenedBlockDto,
+            OpenedBlockModel,
             r#"
             SELECT 
                 b.id as "id: _", 
@@ -35,7 +55,10 @@ impl BlockQueryService<Sqlite> for SqliteBlockQueryService {
             "#,
         )
         .fetch_all(executor)
-        .await?;
+        .await?
+        .into_iter()
+        .map(OpenedBlockDto::from)
+        .collect();
 
         Ok(opened_blocks)
     }

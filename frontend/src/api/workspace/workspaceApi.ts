@@ -5,7 +5,7 @@ import type { OpenBlockRequest } from "./types/openBlockRequest";
 import type { OpenBlockResponse } from "./types/openBlockResponse";
 
 export const workspaceApi = {
-  async getOpenedBlcoks(): Promise<GetOpenedBlocksResponse> {
+  async getOpenedBlocks(): Promise<GetOpenedBlocksResponse> {
     try {
       const response = await backendClient.get("/workspace/opened-blocks");
       return response.data;
@@ -18,7 +18,7 @@ export const workspaceApi = {
     try {
       const response = await backendClient.post(
         "/workspace/opened-blocks",
-        request
+        request,
       );
       return response.data;
     } catch (error) {

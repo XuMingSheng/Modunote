@@ -1,4 +1,5 @@
 mod handler;
+mod error;
 mod request;
 mod response;
 

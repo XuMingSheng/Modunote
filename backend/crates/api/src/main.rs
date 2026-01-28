@@ -6,7 +6,7 @@ use tracing::instrument;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
 
-use api::config::DatabaseImpl;
+use api::app_state::DatabaseImpl;
 use api::features;
 use api::telemetry::initialize_tracing;
 use api::{AppConfig, AppResult as Result};

@@ -1,3 +1,8 @@
+use axum::{
+    Json,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use chrono::{DateTime, Utc};
 use serde::Serialize;
 use utoipa::ToSchema;
@@ -22,5 +27,11 @@ impl From<Block> for CreateBlockResponse {
             content: block.content,
             created_at: block.created_at,
         }
+    }
+}
+
+impl IntoResponse for CreateBlockResponse {
+    fn into_response(self) -> Response {
+        (StatusCode::CREATED, Json(self)).into_response()
     }
 }

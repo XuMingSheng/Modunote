@@ -3,49 +3,50 @@ use std::sync::Arc;
 use axum::{
     Json,
     extract::{Path, State},
-    http::StatusCode,
 };
-use tracing::{error, instrument};
+use chrono::Utc;
+use tracing::instrument;
 use uuid::Uuid;
 
-use super::{request::UpdateBlockRequest, response::UpdateBlockResponse};
-use crate::{AppState, features::error::HandlerError};
-use storage::repositories::BlockRepository;
-use storage::repositories::block_repository::{BlockRepositoryError, UpdateBlockDto};
+use super::{error::UpdateBlockError, request::UpdateBlockRequest, response::UpdateBlockResponse};
+use crate::AppState;
+use storage::{Database, repositories::BlockRepository};
 
 #[utoipa::path(
       put,
       path = "/api/blocks/{id}",
       tag = "blocks",
       request_body = UpdateBlockRequest,
-      responses(
-          (status = StatusCode::OK, description = "Block updated successfully", body = UpdateBlockResponse),
-          (status = StatusCode::NOT_FOUND, description = "Block not found"),
-          (status = StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error")
-      )
-  )]
+    responses(
+        (status = 200, description = "Block updated successfully", body = UpdateBlockResponse),
+        (status = 404, description = "Block not found"),
+        (status = 500, description = "Internal server error")
+    )
+)]
 #[instrument]
 pub async fn update_block(
     State(state): State<Arc<AppState>>,
     Path(id): Path<Uuid>,
     Json(request): Json<UpdateBlockRequest>,
-) -> Result<(StatusCode, Json<UpdateBlockResponse>), HandlerError> {
-    let input: UpdateBlockDto = request.into();
-
-    let updated_block = state
+) -> Result<UpdateBlockResponse, UpdateBlockError> {
+    let mut block = state
         .repos
         .blocks
-        .update_by_id(id, &input)
-        .await
-        .map_err(|e| match e {
-            BlockRepositoryError::NotFound { .. } => HandlerError::NotFound,
-            _ => {
-                error!("Failed to update block {id}: {e}");
-                HandlerError::Anyhow
-            }
-        })?;
+        .get_by_id(id, state.db.pool())
+        .await?
+        .ok_or(UpdateBlockError::NotFound)?;
 
-    let response: UpdateBlockResponse = updated_block.into();
+    if let Some(title) = request.title {
+        block.title = title;
+    }
+    if let Some(content) = request.content {
+        block.content = content;
+    }
+    block.updated_at = Utc::now();
 
-    Ok((StatusCode::OK, Json(response)))
+    state.repos.blocks.save(&block, state.db.pool()).await?;
+
+    let response: UpdateBlockResponse = block.into();
+
+    Ok(response)
 }

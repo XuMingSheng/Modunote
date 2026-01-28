@@ -19,11 +19,11 @@ export interface BlocksSlice {
   deleteBlock: (blockId: string) => Promise<void>;
   createLinkForActiveBlock: (
     linkType: BlockLinkType,
-    linkedBlockId: string
+    linkedBlockId: string,
   ) => Promise<void>;
   deleteLinkForActiveBlock: (
     linkType: BlockLinkType,
-    linkedBlockId: string
+    linkedBlockId: string,
   ) => Promise<void>;
 }
 
@@ -34,19 +34,19 @@ const loadActiveBlock = async (blockId: string) => {
   } catch (error) {
     console.error("Failed to load active block:", error);
     throw new Error(
-      `Failed to load active block: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to load active block: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
 
 const loadOpenedBlocks = async () => {
   try {
-    const response = await workspaceApi.getOpenedBlcoks();
+    const response = await workspaceApi.getOpenedBlocks();
     return response.openedBlocks;
   } catch (error) {
     console.error("Failed to load opened blocks:", error);
     throw new Error(
-      `Failed to load opened blocks: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to load opened blocks: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -61,7 +61,7 @@ const openBlock = async (blockId: string) => {
   } catch (error) {
     console.error("Failed to open block:", error);
     throw new Error(
-      `Failed to open block: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to open block: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -72,7 +72,7 @@ const closeBlock = async (blockId: string) => {
   } catch (error) {
     console.error("Failed to close block:", error);
     throw new Error(
-      `Failed to close block: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to close block: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -83,7 +83,7 @@ const deleteBlock = async (blockId: string) => {
   } catch (error) {
     console.error("Failed to delete block:", error);
     throw new Error(
-      `Failed to delete block: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to delete block: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -95,7 +95,7 @@ const loadParentBlocks = async (blockId: string) => {
   } catch (error) {
     console.error("Failed to load parent blocks:", error);
     throw new Error(
-      `Failed to load parent blocks: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to load parent blocks: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -107,7 +107,7 @@ const loadChildBlocks = async (blockId: string) => {
   } catch (error) {
     console.error("Failed to load child blocks:", error);
     throw new Error(
-      `Failed to load child blocks: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to load child blocks: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -119,7 +119,7 @@ const loadRelatedBlocks = async (blockId: string) => {
   } catch (error) {
     console.error("Failed to load related blocks:", error);
     throw new Error(
-      `Failed to load related blocks: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to load related blocks: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -130,7 +130,7 @@ const createParentLink = async (blockId: string, parentBlockId: string) => {
   } catch (error) {
     console.error("Failed to create parent link:", error);
     throw new Error(
-      `Failed to create parent link: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to create parent link: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -141,7 +141,7 @@ const createChildLink = async (blockId: string, childBlockId: string) => {
   } catch (error) {
     console.error("Failed to create child link:", error);
     throw new Error(
-      `Failed to create child link: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to create child link: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -152,7 +152,7 @@ const createRelatedLink = async (blockId: string, relatedBlockId: string) => {
   } catch (error) {
     console.error("Failed to create related link:", error);
     throw new Error(
-      `Failed to create related link: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to create related link: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -163,7 +163,7 @@ const deleteParentLink = async (blockId: string, parentBlockId: string) => {
   } catch (error) {
     console.error("Failed to delete parent link:", error);
     throw new Error(
-      `Failed to delete parent link: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to delete parent link: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -174,7 +174,7 @@ const deleteChildLink = async (blockId: string, childBlockId: string) => {
   } catch (error) {
     console.error("Failed to delete child link:", error);
     throw new Error(
-      `Failed to delete child link: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to delete child link: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
@@ -185,21 +185,21 @@ const deleteRelatedLink = async (blockId: string, relatedBlockId: string) => {
   } catch (error) {
     console.error("Failed to delete related link:", error);
     throw new Error(
-      `Failed to delete related link: ${error instanceof Error ? error.message : "Unknown error"}`
+      `Failed to delete related link: ${error instanceof Error ? error.message : "Unknown error"}`,
     );
   }
 };
 
 const loadNextActiveBlock = async (
   activeBlockId: string,
-  openedBlocks: OpenedBlock[]
+  openedBlocks: OpenedBlock[],
 ) => {
   if (openedBlocks.length == 1) {
     return null;
   }
 
   const activeBlockIndex = openedBlocks.findIndex(
-    (b) => b.blockId == activeBlockId
+    (b) => b.blockId == activeBlockId,
   );
   const nextActiveIndex =
     activeBlockIndex == openedBlocks.length - 1
@@ -212,7 +212,7 @@ const loadNextActiveBlock = async (
 
 const reloadActiveBlockLinksAfterDeletion = async (
   changedBlockId: string,
-  activeBlock: Block
+  activeBlock: Block,
 ) => {
   const isParent =
     activeBlock.parentBlocks.findIndex((b) => b.blockId === changedBlockId) !==
@@ -323,7 +323,7 @@ export const createBlockSlice: StateCreator<
       } else if (activeBlock) {
         activeBlock = await reloadActiveBlockLinksAfterDeletion(
           blockId,
-          activeBlock
+          activeBlock,
         );
         set(() => ({ activeBlock }));
       }
@@ -339,7 +339,7 @@ export const createBlockSlice: StateCreator<
 
   createLinkForActiveBlock: async (
     linkType: BlockLinkType,
-    linkedBlockId: string
+    linkedBlockId: string,
   ) => {
     const activeBlock = get().activeBlock;
     if (!activeBlock) {
@@ -374,7 +374,7 @@ export const createBlockSlice: StateCreator<
 
   deleteLinkForActiveBlock: async (
     linkType: BlockLinkType,
-    linkedBlockId: string
+    linkedBlockId: string,
   ) => {
     const activeBlock = get().activeBlock;
     if (!activeBlock) {

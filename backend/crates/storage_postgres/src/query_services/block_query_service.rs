@@ -21,7 +21,7 @@ impl From<OpenedBlockModel> for OpenedBlockDto {
             id: model.id,
             title: model.title,
             opened_at: model.opened_at,
-            tab_index: model.tab_index as u32,
+            tab_index: model.tab_index as usize,
         }
     }
 }

@@ -2,21 +2,23 @@ import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
 import { Crepe } from "@milkdown/crepe";
 
 interface CrepeEditorProps {
-  initialContent: string;
+  id: string;
+  content: string;
   onUpdate: (content: string) => void;
 }
 
 interface MilkdownEditorProps {
-  initialContent: string;
+  id: string;
+  content: string;
   onUpdate: (content: string) => void;
 }
 
-const CrepeEditor = ({ initialContent, onUpdate }: CrepeEditorProps) => {
+const CrepeEditor = ({ id, content, onUpdate }: CrepeEditorProps) => {
   useEditor(
     (root) => {
       const crepe = new Crepe({
         root,
-        defaultValue: initialContent,
+        defaultValue: content,
       });
 
       crepe.on((api) => {
@@ -27,19 +29,20 @@ const CrepeEditor = ({ initialContent, onUpdate }: CrepeEditorProps) => {
 
       return crepe;
     },
-    [initialContent]
+    [id, content],
   );
 
   return <Milkdown />;
 };
 
 export const MilkdownEditor = ({
-  initialContent,
+  id,
+  content,
   onUpdate,
 }: MilkdownEditorProps) => {
   return (
     <MilkdownProvider>
-      <CrepeEditor initialContent={initialContent} onUpdate={onUpdate} />
+      <CrepeEditor id={id} content={content} onUpdate={onUpdate} />
     </MilkdownProvider>
   );
 };

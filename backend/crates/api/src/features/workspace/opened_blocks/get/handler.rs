@@ -1,10 +1,12 @@
 use std::sync::Arc;
 
-use axum::{Json, extract::State, http::StatusCode};
-use tracing::{error, instrument};
+use axum::extract::State;
+use tracing::instrument;
 
-use super::GetOpenedBlocksResponse;
+use super::error::GetOpenedBlockError;
+use super::response::GetOpenedBlocksResponse;
 use crate::AppState;
+use storage::Database;
 use storage::query_services::BlockQueryService;
 
 #[utoipa::path(
@@ -19,20 +21,16 @@ use storage::query_services::BlockQueryService;
 #[instrument]
 pub async fn get_opened_blocks(
     State(state): State<Arc<AppState>>,
-) -> Result<Json<GetOpenedBlocksResponse>, StatusCode> {
+) -> Result<GetOpenedBlocksResponse, GetOpenedBlockError> {
     let opened_blocks = state
         .query_services
         .blocks
         .get_opened(state.db.pool())
-        .await
-        .map_err(|e| {
-            error!("Failed to get opened blocks {e}");
-            StatusCode::INTERNAL_SERVER_ERROR
-        })?;
+        .await?;
 
     let response = GetOpenedBlocksResponse {
         opened_blocks: opened_blocks.into_iter().map(|b| b.into()).collect(),
     };
 
-    Ok(Json(response))
+    Ok(response)
 }

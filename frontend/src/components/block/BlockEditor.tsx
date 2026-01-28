@@ -28,7 +28,7 @@ export const BlockEditor = () => {
 
   const updateBlock = async (
     blockId: string,
-    updateData: UpdateBlockRequest
+    updateData: UpdateBlockRequest,
   ) => {
     try {
       await blockApi.update(blockId, updateData);
@@ -102,7 +102,8 @@ export const BlockEditor = () => {
       {/* Content Section */}
       <div className="text-xs text-gray-400 flex-1 overflow-y-auto">
         <MilkdownEditor
-          initialContent={loadedContent!}
+          id={loadedBlockId}
+          content={loadedContent!}
           onUpdate={(updatedContent) => {
             handleChangeContent(updatedContent);
           }}

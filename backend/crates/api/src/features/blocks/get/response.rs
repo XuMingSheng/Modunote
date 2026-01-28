@@ -1,4 +1,8 @@
-use serde;
+use axum::{
+    Json,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -8,7 +12,7 @@ use storage::query_services::block_link_query_service::{AllLinkedBlocksDto, Link
 
 #[derive(Serialize, ToSchema)]
 #[serde(rename_all = "camelCase")]
-pub struct LinkedBlock {
+struct LinkedBlock {
     pub block_id: Uuid,
     pub link_id: Uuid,
     pub title: String,
@@ -61,5 +65,11 @@ impl GetBlockResponse {
             child_blocks,
             related_blocks,
         }
+    }
+}
+
+impl IntoResponse for GetBlockResponse {
+    fn into_response(self) -> Response {
+        (StatusCode::OK, Json(self)).into_response()
     }
 }

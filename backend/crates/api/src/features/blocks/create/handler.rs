@@ -1,14 +1,13 @@
 use std::sync::Arc;
 
-use axum::{Json, extract::State, http::StatusCode};
-use tracing::{error, instrument};
+use axum::{Json, extract::State};
+use tracing::instrument;
 use utoipa;
 
-use super::{request::CreateBlockRequest, response::CreateBlockResponse};
+use super::{error::CreateBlockError, request::CreateBlockRequest, response::CreateBlockResponse};
 use crate::AppState;
-use crate::features::error::HandlerError;
-use storage::repositories::BlockRepository;
-use storage::repositories::block_repository::CreateBlockDto;
+use domain::blocks::Block;
+use storage::{Database, repositories::BlockRepository};
 
 #[instrument]
 #[utoipa::path(
@@ -16,23 +15,18 @@ use storage::repositories::block_repository::CreateBlockDto;
     path = "/api/blocks",
     tag = "blocks",
     responses(
-        (status = StatusCode::CREATED, description = "Block created successfully", body = CreateBlockResponse),
-        (status = StatusCode::INTERNAL_SERVER_ERROR, description = "Internal server error")
+        (status = 201, description = "Block created successfully", body = CreateBlockResponse),
+        (status = 500, description = "Internal server error")
     )
 )]
 pub async fn create_block(
     State(state): State<Arc<AppState>>,
     Json(request): Json<CreateBlockRequest>,
-) -> Result<(StatusCode, Json<CreateBlockResponse>), HandlerError> {
-    let title = request.title.clone();
-    let input: CreateBlockDto = request.into();
-
-    let block = state.repos.blocks.create(&input).await.map_err(|e| {
-        error!("Failed to create block {title}: {e}");
-        HandlerError::Anyhow
-    })?;
+) -> Result<CreateBlockResponse, CreateBlockError> {
+    let block: Block = request.into();
+    state.repos.blocks.save(&block, state.db.pool()).await?;
 
     let response: CreateBlockResponse = block.into();
 
-    Ok((StatusCode::CREATED, Json(response)))
+    Ok(response)
 }

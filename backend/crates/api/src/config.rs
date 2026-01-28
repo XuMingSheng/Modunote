@@ -1,22 +1,4 @@
-use std::env;
-
-cfg_if::cfg_if! {
-    if #[cfg(feature = "native")] {
-        pub use storage_sqlite::SqliteDb as DatabaseImpl;
-
-        pub use storage_sqlite::repositories::{
-            SqliteBlockRepository as BlockRepositoryImpl,
-            SqliteBlockDirectionalLinkRepository as BlockDirectionalLinkRepositoryImpl,
-            SqliteBlockRelatedLinkRepository as BlockRelatedLinRepositoryImpl,
-            SqliteWorkspaceRepository as WorkspaceRepositoryImpl
-        };
-
-        pub use storage_sqlite::query_services::{
-            SqliteBlockQueryService as BlockQueryServiceImpl,
-            SqliteBlockLinkQueryService as BlockLinkQueryServiceImpl,
-        };
-    }
-}
+use tracing::debug;
 
 use super::AppResult as Result;
 
@@ -27,9 +9,10 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn from_env() -> Result<Self> {
-        dotenvy::from_path("backend/.env").ok();
-        let database_url = env::var("DATABASE_URL")?;
-        let log_dir_path: String = env::var("LOG_DIR_PATH")?;
+        dotenvy::from_path("backend/.env").unwrap_or_else(|e| debug!("Error loading .env: {e}"));
+
+        let database_url = std::env::var("DATABASE_URL")?;
+        let log_dir_path: String = std::env::var("LOG_DIR_PATH")?;
 
         let config = Self {
             database_url,

@@ -1,5 +1,6 @@
+mod error;
 mod handler;
 mod request;
 mod response;
 
-pub(crate) use handler::*;
+pub use handler::*;

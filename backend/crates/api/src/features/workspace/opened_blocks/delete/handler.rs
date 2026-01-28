@@ -4,10 +4,12 @@ use axum::{
     extract::{Path, State},
     http::StatusCode,
 };
-use tracing::{error, instrument};
+use tracing::instrument;
 use uuid::Uuid;
 
+use super::error::CloseBlockError;
 use crate::AppState;
+use storage::Database;
 use storage::repositories::WorkspaceRepository;
 
 #[utoipa::path(
@@ -27,11 +29,8 @@ use storage::repositories::WorkspaceRepository;
 pub async fn close_block(
     State(state): State<Arc<AppState>>,
     Path(block_id): Path<Uuid>,
-) -> Result<StatusCode, StatusCode> {
-    let mut workspace = state.repos.workspaces.get().await.map_err(|e| {
-        error!("Failed to get workspace: {e}");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+) -> Result<StatusCode, CloseBlockError> {
+    let mut workspace = state.repos.workspaces.get(state.db.pool()).await?;
 
     let is_opened = workspace
         .opened_blocks
@@ -39,15 +38,12 @@ pub async fn close_block(
         .any(|b| b.block_id == block_id);
 
     if !is_opened {
-        return Err(StatusCode::NOT_FOUND);
+        return Err(CloseBlockError::NotOpened);
     }
 
     workspace.close_block(block_id);
 
-    state.repos.workspaces.save(&workspace).await.map_err(|e| {
-        error!("Failed to save workspace: {e}");
-        StatusCode::INTERNAL_SERVER_ERROR
-    })?;
+    state.repos.workspaces.save(&workspace, state.db.pool()).await?;
 
     Ok(StatusCode::NO_CONTENT)
 }

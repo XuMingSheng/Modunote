@@ -12,6 +12,11 @@ install:
     rustup show active-toolchain
     cargo fetch
 
+build:
+  cd crates/storage_sqlite && DATABASE_URL={{sqlite_dev_url}} cargo sqlx prepare
+  cd crates/storage_postgres && DATABASE_URL={{postgres_dev_url}} cargo sqlx prepare
+  cargo build
+
 postgres-dev-up:
   {{compose}} up -d postgres_dev
   

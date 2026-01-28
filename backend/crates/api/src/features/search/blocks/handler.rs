@@ -1,10 +1,11 @@
 use std::sync::Arc;
 
-use axum::{Json, extract::State, http::StatusCode};
-use tracing::{error, instrument};
+use axum::{Json, extract::State};
+use tracing::instrument;
 
-use super::{request::BlockSearchRequest, response::BlockSearchResponse};
-use crate::{AppState, features::error::HandlerError};
+use super::{error::SearchBlocksError, request::BlockSearchRequest, response::BlockSearchResponse};
+use crate::AppState;
+use storage::Database;
 use storage::query_services::BlockQueryService;
 
 #[utoipa::path(
@@ -12,26 +13,22 @@ use storage::query_services::BlockQueryService;
     path = "/api/search/blocks",
     tag = "search",
     responses(
-        (status = StatusCode::OK, description = "Success", body = BlockSearchResponse),
-        (status = StatusCoee::INTERNAL_SERVER_ERROR, description = "Internal server error")
+        (status = 200, description = "Success", body = BlockSearchResponse),
+        (status = 500, description = "Internal server error")
     )
 )]
 #[instrument]
 pub async fn search_blocks(
     State(state): State<Arc<AppState>>,
     Json(request): Json<BlockSearchRequest>,
-) -> Result<(StatusCode, Json<BlockSearchResponse>), HandlerError> {
+) -> Result<BlockSearchResponse, SearchBlocksError> {
     let blocks = state
         .query_services
         .blocks
         .search(&request.query, state.db.pool())
-        .await
-        .map_err(|e| {
-            error!("Failed to search blocks by '{}': {e}", request.query);
-            HandlerError::Anyhow
-        })?;
+        .await?;
 
     let response: BlockSearchResponse = blocks.into();
 
-    Ok((StatusCode::OK, Json(response)))
+    Ok(response)
 }

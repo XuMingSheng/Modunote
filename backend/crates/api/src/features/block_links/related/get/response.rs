@@ -1,3 +1,8 @@
+use axum::{
+    Json,
+    http::StatusCode,
+    response::{IntoResponse, Response},
+};
 use serde::Serialize;
 use utoipa::ToSchema;
 use uuid::Uuid;
@@ -23,5 +28,11 @@ impl From<LinkedBlockDto> for RelatedBlock {
             block_id: block.block_id,
             title: block.title,
         }
+    }
+}
+
+impl IntoResponse for GetBlockRelatedLinksResponse {
+    fn into_response(self) -> Response {
+        (StatusCode::OK, Json(self)).into_response()
     }
 }
