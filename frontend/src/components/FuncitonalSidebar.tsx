@@ -11,7 +11,7 @@ interface Page {
 }
 
 const PAGES: Page[] = [
-  { id: "workplace", icon: LayoutDashboard, label: "Workplace" },
+  { id: "blocks", icon: LayoutDashboard, label: "Blocks" },
   { id: "canvases", icon: FileText, label: "Canvases" },
   { id: "graph", icon: GitBranch, label: "Graph" },
 ];

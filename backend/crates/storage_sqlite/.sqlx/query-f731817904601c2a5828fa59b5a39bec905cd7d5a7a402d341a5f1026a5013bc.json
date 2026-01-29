@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO block_directional_links\n                (id, block_from_id, block_to_id, created_at)\n                VALUES ($1, $2, $3, $4)\n            RETURNING\n                id as \"id: _\",\n                block_from_id as \"block_from_id: _\",\n                block_to_id as \"block_to_id: _\",\n                created_at as \"created_at: _\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: _",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "block_from_id: _",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "block_to_id: _",
+        "ordinal": 2,
+        "type_info": "Blob"
+      },
+      {
+        "name": "created_at: _",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "f731817904601c2a5828fa59b5a39bec905cd7d5a7a402d341a5f1026a5013bc"
+}

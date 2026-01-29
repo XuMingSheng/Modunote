@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS blocks (
+    id UUID PRIMARY KEY NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    created_at TIMESTAMPTZ NOT NULL,
+    updated_at TIMESTAMPTZ NOT NULL
+);

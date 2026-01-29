@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { type CanvasBlockPlacement } from "@/api/types/canvas";
-import { type Block } from "@/api/types/block";
-import { blockApi } from "@/api/blockApi";
+import { type Block } from "@/api/blocks/types/getBlockResponse";
+import { blockApi } from "@/api/blocks/blockApi";
 
 interface EdgeRendererProps {
   placements: CanvasBlockPlacement[];
@@ -20,7 +20,12 @@ interface Connection {
   type: "parent" | "child" | "related";
 }
 
-export const EdgeRenderer = ({ placements, showEdges, gridSize, zoomLevel }: EdgeRendererProps) => {
+export const EdgeRenderer = ({
+  placements,
+  showEdges,
+  gridSize,
+  zoomLevel,
+}: EdgeRendererProps) => {
   const [blocks, setBlocks] = useState<BlockData>({});
   const [connections, setConnections] = useState<Connection[]>([]);
 
@@ -36,22 +41,22 @@ export const EdgeRenderer = ({ placements, showEdges, gridSize, zoomLevel }: Edg
 
           // Add parent-child connections
           for (const parent of block.parentBlocks) {
-            if (placements.some(p => p.blockId === parent.id)) {
+            if (placements.some((p) => p.blockId === parent.id)) {
               newConnections.push({
                 from: parent.id,
                 to: placement.blockId,
-                type: "parent"
+                type: "parent",
               });
             }
           }
 
           // Add related connections
           for (const related of block.relatedBlocks) {
-            if (placements.some(p => p.blockId === related.id)) {
+            if (placements.some((p) => p.blockId === related.id)) {
               newConnections.push({
                 from: placement.blockId,
                 to: related.id,
-                type: "related"
+                type: "related",
               });
             }
           }
@@ -70,12 +75,12 @@ export const EdgeRenderer = ({ placements, showEdges, gridSize, zoomLevel }: Edg
   }, [placements, showEdges]);
 
   const getPlacementCenter = (blockId: string) => {
-    const placement = placements.find(p => p.blockId === blockId);
+    const placement = placements.find((p) => p.blockId === blockId);
     if (!placement) return { x: 0, y: 0 };
 
     return {
       x: placement.x + placement.width / 2,
-      y: placement.y + (placement.collapsed ? 30 : placement.height / 2)
+      y: placement.y + (placement.collapsed ? 30 : placement.height / 2),
     };
   };
 
@@ -83,8 +88,12 @@ export const EdgeRenderer = ({ placements, showEdges, gridSize, zoomLevel }: Edg
     const fromPos = getPlacementCenter(connection.from);
     const toPos = getPlacementCenter(connection.to);
 
-    const strokeColor = connection.type === "parent" ? "#3b82f6" : 
-                       connection.type === "related" ? "#10b981" : "#6b7280";
+    const strokeColor =
+      connection.type === "parent"
+        ? "#3b82f6"
+        : connection.type === "related"
+          ? "#10b981"
+          : "#6b7280";
     const strokeWidth = connection.type === "parent" ? 2 : 1;
     const isDashed = connection.type === "related";
 
@@ -101,7 +110,9 @@ export const EdgeRenderer = ({ placements, showEdges, gridSize, zoomLevel }: Edg
     const pathData = `M ${fromPos.x} ${fromPos.y} C ${controlX1} ${controlY1}, ${controlX2} ${controlY2}, ${toPos.x} ${toPos.y}`;
 
     return (
-      <g key={`${connection.from}-${connection.to}-${connection.type}-${index}`}>
+      <g
+        key={`${connection.from}-${connection.to}-${connection.type}-${index}`}
+      >
         <path
           d={pathData}
           stroke={strokeColor}
@@ -110,11 +121,11 @@ export const EdgeRenderer = ({ placements, showEdges, gridSize, zoomLevel }: Edg
           strokeDasharray={isDashed ? "5,5" : "none"}
           opacity={0.7}
         />
-        
+
         {/* Arrow head for parent-child relationships */}
         {connection.type === "parent" && (
           <polygon
-            points={`${toPos.x-6},${toPos.y-4} ${toPos.x},${toPos.y} ${toPos.x-6},${toPos.y+4}`}
+            points={`${toPos.x - 6},${toPos.y - 4} ${toPos.x},${toPos.y} ${toPos.x - 6},${toPos.y + 4}`}
             fill={strokeColor}
             opacity={0.7}
           />

@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                b.id as \"id: _\", \n                b.title,\n                b.created_at as \"created_at: _\",\n                b.updated_at as \"updated_at: _\",\n                bo.opened_at as \"opened_at: _\"\n            FROM blocks b\n            LEFT JOIN block_opens bo ON bo.block_id = b.id\n            WHERE \n                title LIKE $1 OR\n                content LIKE $1\n            ORDER BY updated_at DESC\n            LIMIT 50\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: _",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: _",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: _",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "opened_at: _",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      true
+    ]
+  },
+  "hash": "98ac7d377dbac0636a7b5129768f5ba052a8ad02d5b4fe06915fbf5b9c3d9b7b"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n                INSERT INTO block_opens (block_id, opened_at, tab_index)\n                VALUES ($1, $2, $3)\n                ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 3
+    },
+    "nullable": []
+  },
+  "hash": "f6baac5fe23f0560ec87c434daa375799c3abeacd08fcf0b8cc2250353c621f0"
+}

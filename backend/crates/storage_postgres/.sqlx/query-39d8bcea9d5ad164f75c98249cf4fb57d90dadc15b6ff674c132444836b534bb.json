@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                b.id, \n                b.title,\n                b.created_at,\n                b.updated_at,\n                bo.opened_at as \"opened_at?\"\n            FROM blocks b\n            LEFT JOIN block_opens bo ON bo.block_id = b.id\n            WHERE \n                title LIKE $1 OR\n                content LIKE $1\n            ORDER BY updated_at DESC\n            LIMIT 50\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "id",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 2,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 3,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "opened_at?",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Text"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "39d8bcea9d5ad164f75c98249cf4fb57d90dadc15b6ff674c132444836b534bb"
+}

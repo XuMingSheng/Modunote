@@ -1,0 +1,14 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "DELETE FROM block_directional_paths\n            WHERE $1 = ANY(block_path_ids)",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "f27e6551652ebf504773cdd35923c76a45a535556ade41a91ab125ebfa473f08"
+}

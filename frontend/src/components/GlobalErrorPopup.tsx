@@ -5,7 +5,10 @@ interface GlobalErrorPopupProps {
   onDismiss: () => void;
 }
 
-export const GlobalErrorPopup = ({ message, onDismiss }: GlobalErrorPopupProps) => {
+export const GlobalErrorPopup = ({
+  message,
+  onDismiss,
+}: GlobalErrorPopupProps) => {
   return (
     <div className="fixed top-4 right-4 z-50 max-w-md bg-red-50 border border-red-200 rounded-lg shadow-lg p-4">
       <div className="flex items-start gap-3">

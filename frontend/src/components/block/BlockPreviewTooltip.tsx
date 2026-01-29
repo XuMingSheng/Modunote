@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import { useError } from "@/context/ErrorContext";
+
+import { useAppStore } from "@/store/useAppStore";
 import { MarkdownRenderer } from "@/components/shared/MarkdownRenderer";
-import { blockApi } from "@/api/blockApi";
-import { type Block } from "@/api/types/block";
+import { blockApi } from "@/api/blocks/blockApi";
+import { type GetBlockResponse as Block } from "@/api/blocks/types/getBlockResponse";
 
 interface BlockPreviewTooltipProps {
   blockId: string;
 }
 
 export const BlockPreviewTooltip = ({ blockId }: BlockPreviewTooltipProps) => {
+  const setError = useAppStore((state) => state.setError);
   const [block, setBlock] = useState<Block | null>(null);
-
-  const { setError } = useError();
 
   useEffect(() => {
     loadBlock();

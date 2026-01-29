@@ -1,0 +1,2 @@
+ALTER TABLE block_opens
+ADD COLUMN tab_index INTEGER NOT NULL;

@@ -1,50 +1,75 @@
-import { useState, useEffect } from "react";
+import { useRef } from "react";
 
-import { useError } from "@/context/ErrorContext";
 import { AutoSave } from "@/components/shared/AutoSave";
 import { MilkdownEditor } from "../shared/MiikdownEditor";
-import { blockApi } from "@/api/blockApi";
-import { type Block } from "@/api/types/block";
-import { type BlockUpdateRequest } from "@/api/types/blockUpdateRequest";
+import { useAppStore } from "@/store/useAppStore";
+import { blockApi } from "@/api/blocks/blockApi";
+import { type UpdateBlockRequest } from "@/api/blocks/types/updateBlockRequest";
 
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
 
-interface BlockEditorProps {
-  activeBlock: Block;
-}
-
 const AUTOSAVE_INTERNVAL = 1500;
 
-export const BlockEditor = ({ activeBlock }: BlockEditorProps) => {
-  const [title, setTitle] = useState(activeBlock.title);
-  const [content, setContent] = useState(activeBlock.content);
+interface Block {
+  title: string;
+  content: string;
+}
 
-  const { setError } = useError();
+export const BlockEditor = () => {
+  const loadedBlockId = useAppStore((state) => state.activeBlock?.id);
+  const loadedTitle = useAppStore((state) => state.activeBlock?.title);
+  const loadedContent = useAppStore((state) => state.activeBlock?.content);
+  const loadOpenedBlocks = useAppStore((state) => state.loadOpenedBlocks);
+  const setError = useAppStore((state) => state.setError);
 
-  useEffect(() => {
-    setTitle(activeBlock.title);
-    setContent(activeBlock.content);
-  }, [activeBlock.id]);
+  const activeBlockRef = useRef<Block | null>(null);
+  const autoSaveRef = useRef<any>(null);
 
-  const updateBlock = async (updateData: BlockUpdateRequest) => {
+  const updateBlock = async (
+    blockId: string,
+    updateData: UpdateBlockRequest,
+  ) => {
     try {
-      await blockApi.update(activeBlock.id, updateData);
-      return true;
+      await blockApi.update(blockId, updateData);
+      await loadOpenedBlocks();
     } catch (error) {
       console.error("Failed to update block:", error);
-      setError(
-        `Failed to update block: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
-      return false;
+      const errorMsg = `Failed to update block: ${error instanceof Error ? error.message : "Unknown error"}`;
+      setError(errorMsg);
+      throw new Error(errorMsg);
     }
   };
 
-  if (!activeBlock) {
+  if (!loadedBlockId) {
+    activeBlockRef.current = null;
+
     return (
       <p className="text-gray-500">No block open. Create or import one.</p>
     );
   }
+
+  activeBlockRef.current = {
+    title: loadedTitle!,
+    content: loadedContent!,
+  };
+  const activeBlock = activeBlockRef.current;
+
+  const handleChangeTitle = (title: string) => {
+    autoSaveRef.current?.updateData({
+      ...activeBlock,
+      title: title,
+    });
+    activeBlock.title = title;
+  };
+
+  const handleChangeContent = (content: string) => {
+    autoSaveRef.current?.updateData({
+      ...activeBlock,
+      content: content,
+    });
+    activeBlock.content = content;
+  };
 
   return (
     <div className="flex flex-col h-full">
@@ -54,26 +79,34 @@ export const BlockEditor = ({ activeBlock }: BlockEditorProps) => {
           Title
         </label>
         <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          key={loadedBlockId}
+          defaultValue={loadedTitle}
+          onChange={(e) => handleChangeTitle(e.target.value)}
           className="text-xl font-bold w-full"
           placeholder="Title..."
         />
         <AutoSave
-          activeId={activeBlock.id}
-          data={{ title, content }}
+          ref={autoSaveRef}
+          activeId={loadedBlockId}
+          data={activeBlock}
           interval={AUTOSAVE_INTERNVAL}
-          onSave={async () => {
-            return await updateBlock({ title, content });
-          }}
+          onSave={() =>
+            updateBlock(loadedBlockId, {
+              title: activeBlock.title,
+              content: activeBlock.content,
+            })
+          }
         />
       </div>
 
       {/* Content Section */}
       <div className="text-xs text-gray-400 flex-1 overflow-y-auto">
         <MilkdownEditor
-          initialContent={activeBlock.content}
-          onUpdate={(updatedContent) => setContent(updatedContent)}
+          id={loadedBlockId}
+          content={loadedContent!}
+          onUpdate={(updatedContent) => {
+            handleChangeContent(updatedContent);
+          }}
         />
       </div>
     </div>

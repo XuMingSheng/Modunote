@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT block_path_ids from block_directional_paths\n            WHERE block_ancestor_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "name": "block_path_ids",
+        "ordinal": 0,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "4f5a67cfb748fbfa7b15bad8b92fc552272f0c19696ff7a6132ffd8d5fdf540b"
+}

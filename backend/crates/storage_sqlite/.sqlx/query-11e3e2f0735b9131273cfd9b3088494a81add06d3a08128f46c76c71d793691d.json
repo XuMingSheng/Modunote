@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                brl.id as \"link_id: _\",\n                b.id as \"block_id: _\",\n                b.title,\n                b.created_at as \"created_at: _\",\n                b.updated_at as \"updated_at: _\"\n            FROM block_related_links brl\n            JOIN blocks b ON (\n                (brl.block_a_id = $1 AND b.id = brl.block_b_id) OR \n                (brl.block_b_id = $1 AND b.id = brl.block_a_id)\n            )\n            WHERE brl.block_a_id = $1 OR brl.block_b_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "link_id: _",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "block_id: _",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "title",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: _",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: _",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "11e3e2f0735b9131273cfd9b3088494a81add06d3a08128f46c76c71d793691d"
+}

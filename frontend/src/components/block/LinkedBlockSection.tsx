@@ -1,96 +1,83 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Plus, FileSearch, X } from "lucide-react";
 
-import { useError } from "@/context/ErrorContext";
+import { useAppStore } from "@/store/useAppStore";
+import { type BlockLinkType } from "@/store/slices/blocksSlice";
 import { BlockSearchModal } from "@/components/BlockSearchModal";
-import { blockApi } from "@/api/blockApi";
-import type { BlockLink } from "@/api/types/blockLink";
-import type { BlockSearchResponseItem } from "@/api/types/blockSearchResponse";
-import type { BlockUpdateRequest } from "@/api/types/blockUpdateRequest";
-
+import { blockApi } from "@/api/blocks/blockApi";
+import type { LinkedBlock } from "@/api/blocks/types/getBlockLinksResponse";
+import type { SearchBlocksResponseItem } from "@/api/search/types/searchBlocksResponse";
 interface LinkedBlockSectionProps {
   title: string;
-  blockLinkType: "parentBlocks" | "childBlocks" | "relatedBlocks";
-  activeBlockId: string;
-  onActiveBlockIdChange: (newId: string) => void;
-  onHoverBlockChange: (blockId: string | null) => void;
+  linkType: BlockLinkType;
+  onChangeHoverBlock: (blockId: string | null) => void;
 }
 
 export const LinkedBlockSection = ({
   title,
-  blockLinkType,
-  activeBlockId,
-  onActiveBlockIdChange,
-  onHoverBlockChange,
+  linkType,
+  onChangeHoverBlock,
 }: LinkedBlockSectionProps) => {
+  const activateBlock = useAppStore((state) => state.activateBlock);
+  const createLink = useAppStore((state) => state.createLinkForActiveBlock);
+  const deleteLink = useAppStore((state) => state.deleteLinkForActiveBlock);
+  let blockLinks: LinkedBlock[] | null;
+
+  switch (linkType) {
+    case "parents": {
+      blockLinks = useAppStore(
+        (state) => state.activeBlock?.parentBlocks ?? null
+      );
+      break;
+    }
+    case "children": {
+      blockLinks = useAppStore(
+        (state) => state.activeBlock?.childBlocks ?? null
+      );
+      break;
+    }
+    case "related": {
+      blockLinks = useAppStore(
+        (state) => state.activeBlock?.relatedBlocks ?? null
+      );
+    }
+  }
+
   const [searchOpen, setSearchOpen] = useState(false);
-  const [blockLinks, setBlockLinks] = useState<BlockLink[]>([]);
 
-  const { setError } = useError();
+  if (!blockLinks) {
+    return null;
+  }
 
-  useEffect(() => {
-    loadBlockLinks();
-  }, [activeBlockId]);
-
-  const loadBlockLinks = async () => {
-    try {
-      const block = await blockApi.getLinks(activeBlockId);
-      setBlockLinks(block[blockLinkType]);
-    } catch (error) {
-      console.error("Failed to load block links:", error);
-      setError(
-        `Failed to load block links: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
-      return null;
-    }
+  const handleSelect = async (blockId: string) => {
+    await activateBlock(blockId);
   };
 
-  const createBlock = async () => {
-    try {
-      const block = await blockApi.create();
-      return block;
-    } catch (error) {
-      console.error("Failed to create new block:", error);
-      setError(
-        `Failed to create new block: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
-      return null;
-    }
-  };
+  const handleCreate = async () => {
+    const block = await blockApi.create();
 
-  const updateBlock = async (request: BlockUpdateRequest) => {
-    try {
-      await blockApi.update(activeBlockId, request);
-      await loadBlockLinks();
-    } catch (error) {
-      console.error("Failed to update block:", error);
-      setError(
-        `Failed to update block: ${error instanceof Error ? error.message : "Unknown error"}`
-      );
-    }
-  };
-
-  const handleAdd = async () => {
-    const newblock = await createBlock();
-    if (newblock) {
-      const newLink = { id: newblock.id, title: newblock.title };
-      await updateBlock({ [blockLinkType]: [...blockLinks, newLink] });
-    }
-  };
-
-  const handleSearchSelect = async (block: BlockSearchResponseItem) => {
-    if (blockLinks.findIndex((b) => b.id == block.id) !== -1) {
+    if (!block) {
       return;
     }
-    const newLink = { id: block.id, title: block.title };
-    await updateBlock({ [blockLinkType]: [...blockLinks, newLink] });
+
+    await createLink(linkType, block.id);
+    await activateBlock(block.id);
   };
 
-  function handleRemove(blockId: string) {
-    updateBlock({
-      [blockLinkType]: blockLinks.filter((b) => b.id !== blockId),
-    });
-  }
+  const handleSearchSelect = async (block: SearchBlocksResponseItem) => {
+    const linkExists =
+      blockLinks.findIndex((b) => b.blockId == block.id) !== -1;
+
+    if (linkExists) {
+      return;
+    }
+
+    await createLink(linkType, block.id);
+  };
+
+  const handleDelete = async (blockId: string) => {
+    await deleteLink(linkType, blockId);
+  };
 
   return (
     <div>
@@ -101,7 +88,7 @@ export const LinkedBlockSection = ({
         </div>
         <div className="flex gap-1">
           <button
-            onClick={handleAdd}
+            onClick={handleCreate}
             className="p-1 rounded hover:bg-gray-200"
             title={`Create new ${title}`}
           >
@@ -118,27 +105,27 @@ export const LinkedBlockSection = ({
       </div>
       {/* Linked block list */}
       <div className="space-y-1">
-        {blockLinks.map((block) => (
+        {blockLinks.map((link) => (
           <div
-            key={block.id}
+            key={link.blockId}
             className="flex items-center justify-between px-3 py-2 cursor-pointer border-b border-gray-200 hover:bg-gray-100"
-            onMouseEnter={() => onHoverBlockChange(block.id)}
-            onMouseLeave={() => onHoverBlockChange(null)}
+            onMouseEnter={() => onChangeHoverBlock(link.blockId)}
+            onMouseLeave={() => onChangeHoverBlock(null)}
           >
             <span
               className="min-w-0 flex-1 truncate text-sm"
-              onClick={() => onActiveBlockIdChange(block.id)}
+              onClick={() => handleSelect(link.blockId)}
             >
-              {block.title}
+              {link.title}
             </span>
             <div className="flex items-center gap-1">
               <button
                 className="ml-2 text-red-500 hover:text-red-700"
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleRemove(block.id);
+                  handleDelete(link.blockId);
                 }}
-                aria-label={`Close block ${block.title}`}
+                aria-label={`Close block ${link.title}`}
               >
                 <X className="w-4 h-4" />
               </button>

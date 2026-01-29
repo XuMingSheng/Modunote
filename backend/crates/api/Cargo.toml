@@ -1,0 +1,33 @@
+[package]
+name = "api"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+default = ["cloud"]
+native = ["storage-sqlite"]
+cloud = ["storage-postgres"]
+
+[dependencies]
+axum = "0.8.4"
+dotenvy = "0.15"
+cfg-if = "1.0"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-appender = "0.2"
+tokio = { version = "1.38", features = ["full"] }
+tower = "0.5"
+tower-http = { version = "0.6", features = ["trace"] }
+utoipa = { version = "5", features = ["axum_extras", "chrono", "uuid"] }
+utoipa-swagger-ui = { version = "9", features = ["axum"] }
+utoipa-axum = "0.2"
+
+serde = { workspace = true, features = ["derive"] }
+thiserror = { workspace = true }
+uuid  = { workspace = true }
+chrono = { workspace = true }
+
+domain = { path = "../domain" }
+storage = { path = "../storage"}
+storage-sqlite = {path= "../storage_sqlite", optional = true}
+storage-postgres = {path="../storage_postgres", optional = true}

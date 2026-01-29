@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            INSERT INTO block_related_links\n                (id, block_a_id, block_b_id, created_at)\n                VALUES ($1, $2, $3, $4)\n            RETURNING\n                id as \"id: _\",\n                block_a_id as \"block_a_id: _\",\n                block_b_id as \"block_b_id: _\",\n                created_at as \"created_at: _\"\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: _",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "block_a_id: _",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "block_b_id: _",
+        "ordinal": 2,
+        "type_info": "Blob"
+      },
+      {
+        "name": "created_at: _",
+        "ordinal": 3,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 4
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "608de821784a9b7c76ca3b6126b438f8ec1eb468bed7aeaaa8d3c0475a161e0f"
+}

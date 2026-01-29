@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            DELETE FROM block_directional_paths\n            WHERE id IN (\n                SELECT bdp.id\n                FROM block_directional_paths AS bdp\n                WHERE EXISTS (\n                    SELECT 1 FROM json_each(bdp.block_path_ids) AS a\n                    JOIN json_each(bdp.block_path_ids) AS b ON a.key = b.key - 1\n                    WHERE a.value = $1 AND b.value = $2\n                )\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "809bb2d3005498aedaf2d4888218eb22144482e97d48ed531331aa9428cc7c88"
+}

@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM block_directional_paths\n            WHERE EXISTS (\n                SELECT 1 FROM json_each(block_path_ids)\n                WHERE value = $1\n            )",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": []
+  },
+  "hash": "c08b419a06847d4da5ef717ef3ddaee19e1b74a3a55cb442b1ab9ceb1c436da7"
+}

@@ -1,0 +1,20 @@
+{
+  "db_name": "SQLite",
+  "query": "SELECT EXISTS (SELECT 1 FROM block_directional_paths\n            WHERE block_ancestor_id = $1 AND block_descendant_id = $2)",
+  "describe": {
+    "columns": [
+      {
+        "name": "EXISTS (SELECT 1 FROM block_directional_paths\n            WHERE block_ancestor_id = $1 AND block_descendant_id = $2)",
+        "ordinal": 0,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "38a2ed93cc682e632f7e358e8e8d2cb0297c6a42ded329d955b8d6ddbf1ac5bd"
+}

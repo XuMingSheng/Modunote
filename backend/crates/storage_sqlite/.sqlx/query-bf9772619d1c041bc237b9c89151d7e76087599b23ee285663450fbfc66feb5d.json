@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM block_directional_links WHERE block_from_id = $1 AND block_to_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "bf9772619d1c041bc237b9c89151d7e76087599b23ee285663450fbfc66feb5d"
+}

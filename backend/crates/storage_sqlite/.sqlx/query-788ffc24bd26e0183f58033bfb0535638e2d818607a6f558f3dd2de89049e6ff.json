@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM block_opens",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": []
+  },
+  "hash": "788ffc24bd26e0183f58033bfb0535638e2d818607a6f558f3dd2de89049e6ff"
+}
