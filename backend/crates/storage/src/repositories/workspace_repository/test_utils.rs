@@ -89,8 +89,13 @@ where
         .collect();
 
     assert_eq!(fetched_map.len(), 2);
-    assert_eq!(fetched_map.get(&a.id), Some(&(opened_at_a, 0)));
-    assert_eq!(fetched_map.get(&b.id), Some(&(opened_at_b, 1)));
+    let a_entry = fetched_map.get(&a.id).expect("missing opened block a");
+    assert_eq!(a_entry.1, 0);
+    assert_eq!(a_entry.0.timestamp_micros(), opened_at_a.timestamp_micros());
+
+    let b_entry = fetched_map.get(&b.id).expect("missing opened block b");
+    assert_eq!(b_entry.1, 1);
+    assert_eq!(b_entry.0.timestamp_micros(), opened_at_b.timestamp_micros());
 
     let opened_at_c = Utc::now();
     let overwrite = Workspace {
