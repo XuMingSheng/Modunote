@@ -13,33 +13,18 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Rust
-        uses: actions/setup-rust@v1
-        with:
-          rust-version: stable
+        uses: dtolnay/rust-toolchain@stable
 
-      - name: Install dependencies for Tauri
-        run: sudo apt-get update && sudo apt-get install -y libwebkit2gtk-4.0-dev build-essential curl wget libssl-dev libappindicator3-dev librsvg2-dev
+      - name: Set up just
+        uses: extractions/setup-just@v2
 
-      - name: Build Rust workspace
-        run: cargo build --workspace --verbose
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli --no-default-features --features sqlite,postgres
 
-      - name: Run Rust tests
-        run: cargo test --workspace --all-features --verbose
+      - name: Run sqlite tests
+        working-directory: backend
+        run: just test-sqlite
 
-      - name: Check formatting
-        run: cargo fmt --all -- --check
-
-      - name: Lint with Clippy
-        run: cargo clippy --all-targets --all-features -- -D warnings
-
-      # Optional: Web frontend build (if Svelte/React etc.)
-      # - name: Install Node.js
-      #   uses: actions/setup-node@v4
-      #   with:
-      #     node-version: '20'
-      #
-      # - name: Build web frontend
-      #   run: |
-      #     cd web
-      #     npm ci
-      #     npm run build
+      - name: Run postgres tests
+        working-directory: backend
+        run: just test-postgres

@@ -1,0 +1,22 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "SELECT block_path_ids as \"block_path_ids: Vec<Uuid>\"\n            FROM block_directional_paths\n            WHERE block_descendant_id = $1",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "block_path_ids: Vec<Uuid>",
+        "type_info": "UuidArray"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false
+    ]
+  },
+  "hash": "d2a51266fe7a39095f513d7d845bed983b26766ad1945efb4f0bfa61796936ec"
+}

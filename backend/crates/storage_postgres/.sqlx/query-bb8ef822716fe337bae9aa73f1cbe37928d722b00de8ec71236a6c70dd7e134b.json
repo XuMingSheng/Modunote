@@ -1,0 +1,52 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                'parent' as \"link_type!: LinkType \",\n                bdl.id as \"link_id!\",\n                b.id as \"block_id!\",\n                b.title as \"title!\",\n                b.created_at as \"created_at!\",\n                b.updated_at as \"updated_at!\"\n            FROM block_directional_links bdl\n            JOIN blocks b ON b.id = bdl.block_from_id\n            WHERE bdl.block_to_id = $1\n            UNION ALL\n            SELECT\n                'child',\n                bdl.id,\n                b.id,\n                b.title,\n                b.created_at,\n                b.updated_at\n            FROM block_directional_links bdl\n            JOIN blocks b ON b.id = bdl.block_to_id\n            WHERE bdl.block_from_id = $1\n            UNION ALL\n            SELECT\n                'related',\n                brl.id,\n                b.id,\n                b.title,\n                b.created_at,\n                b.updated_at\n            FROM block_related_links brl\n            JOIN blocks b ON (\n                (brl.block_a_id = $1 AND b.id = brl.block_b_id) OR \n                (brl.block_b_id = $1 AND b.id = brl.block_a_id)\n            )\n            WHERE brl.block_a_id = $1 OR brl.block_b_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "link_type!: LinkType ",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 1,
+        "name": "link_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "block_id!",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 3,
+        "name": "title!",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 4,
+        "name": "created_at!",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 5,
+        "name": "updated_at!",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      null,
+      null,
+      null,
+      null,
+      null,
+      null
+    ]
+  },
+  "hash": "bb8ef822716fe337bae9aa73f1cbe37928d722b00de8ec71236a6c70dd7e134b"
+}

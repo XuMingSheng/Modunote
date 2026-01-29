@@ -1,0 +1,32 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                block_id as \"block_id: _\",\n                opened_at as \"opened_at: _\",\n                tab_index as \"tab_index: _\"\n            FROM block_opens\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "block_id: _",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "opened_at: _",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "tab_index: _",
+        "ordinal": 2,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "6b7756d0b82ff1b565aee99b761306283035c47c74c0c313602284bc90b3a1ae"
+}

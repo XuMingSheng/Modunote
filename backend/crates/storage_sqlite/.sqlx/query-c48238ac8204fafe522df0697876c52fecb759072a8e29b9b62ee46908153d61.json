@@ -1,0 +1,50 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                'parent' as \"link_type!: LinkType \",\n                bdl.id as \"link_id: _\",\n                b.id as \"block_id: _\",\n                b.title,\n                b.created_at as \"created_at: _\",\n                b.updated_at as \"updated_at: _\"\n            FROM block_directional_links bdl\n            JOIN blocks b ON b.id = bdl.block_from_id\n            WHERE bdl.block_to_id = $1\n            UNION ALL\n            SELECT\n                'child',\n                bdl.id,\n                b.id,\n                b.title,\n                b.created_at,\n                b.updated_at\n            FROM block_directional_links bdl\n            JOIN blocks b ON b.id = bdl.block_to_id\n            WHERE bdl.block_from_id = $1\n            UNION ALL\n            SELECT\n                'related',\n                brl.id,\n                b.id,\n                b.title,\n                b.created_at,\n                b.updated_at\n            FROM block_related_links brl\n            JOIN blocks b ON (\n                (brl.block_a_id = $1 AND b.id = brl.block_b_id) OR \n                (brl.block_b_id = $1 AND b.id = brl.block_a_id)\n            )\n            WHERE brl.block_a_id = $1 OR brl.block_b_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "link_type!: LinkType ",
+        "ordinal": 0,
+        "type_info": "Text"
+      },
+      {
+        "name": "link_id: _",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "block_id: _",
+        "ordinal": 2,
+        "type_info": "Blob"
+      },
+      {
+        "name": "title",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: _",
+        "ordinal": 4,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: _",
+        "ordinal": 5,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c48238ac8204fafe522df0697876c52fecb759072a8e29b9b62ee46908153d61"
+}

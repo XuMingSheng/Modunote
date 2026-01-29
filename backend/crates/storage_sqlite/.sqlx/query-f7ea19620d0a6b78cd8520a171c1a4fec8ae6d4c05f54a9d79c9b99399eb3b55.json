@@ -1,0 +1,12 @@
+{
+  "db_name": "SQLite",
+  "query": "DELETE FROM block_related_links WHERE block_a_id = $1 AND block_b_id = $2",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Right": 2
+    },
+    "nullable": []
+  },
+  "hash": "f7ea19620d0a6b78cd8520a171c1a4fec8ae6d4c05f54a9d79c9b99399eb3b55"
+}

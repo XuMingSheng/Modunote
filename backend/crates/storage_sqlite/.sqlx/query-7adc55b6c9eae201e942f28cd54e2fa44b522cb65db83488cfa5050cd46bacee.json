@@ -1,0 +1,44 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                bdl.id as \"link_id: _\",\n                b.id as \"block_id: _\",\n                b.title,\n                b.created_at as \"created_at: _\",\n                b.updated_at as \"updated_at: _\"\n            FROM block_directional_links bdl\n            JOIN blocks b ON b.id = bdl.block_to_id\n            WHERE bdl.block_from_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "link_id: _",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "block_id: _",
+        "ordinal": 1,
+        "type_info": "Blob"
+      },
+      {
+        "name": "title",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "created_at: _",
+        "ordinal": 3,
+        "type_info": "Text"
+      },
+      {
+        "name": "updated_at: _",
+        "ordinal": 4,
+        "type_info": "Text"
+      }
+    ],
+    "parameters": {
+      "Right": 1
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "7adc55b6c9eae201e942f28cd54e2fa44b522cb65db83488cfa5050cd46bacee"
+}

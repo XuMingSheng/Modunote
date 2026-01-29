@@ -1,0 +1,15 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            DELETE FROM block_directional_paths\n            WHERE EXISTS (\n                SELECT 1\n                FROM generate_subscripts(block_path_ids, 1) AS idx\n                WHERE block_path_ids[idx] = $1\n                  AND idx < array_length(block_path_ids, 1)\n                  AND block_path_ids[idx + 1] = $2\n            )\n            ",
+  "describe": {
+    "columns": [],
+    "parameters": {
+      "Left": [
+        "Uuid",
+        "Uuid"
+      ]
+    },
+    "nullable": []
+  },
+  "hash": "2ac0b8735e8d4f610d79115487757ace8770892e8c9ecb401a7b71423cbe88c0"
+}

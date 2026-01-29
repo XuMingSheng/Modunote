@@ -1,0 +1,46 @@
+{
+  "db_name": "PostgreSQL",
+  "query": "\n            SELECT\n                bdl.id as \"link_id: _\",\n                b.id as \"block_id: _\",\n                b.title,\n                b.created_at,\n                b.updated_at\n            FROM block_directional_links bdl\n            JOIN blocks b ON b.id = bdl.block_to_id\n            WHERE bdl.block_from_id = $1\n            ",
+  "describe": {
+    "columns": [
+      {
+        "ordinal": 0,
+        "name": "link_id: _",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 1,
+        "name": "block_id: _",
+        "type_info": "Uuid"
+      },
+      {
+        "ordinal": 2,
+        "name": "title",
+        "type_info": "Text"
+      },
+      {
+        "ordinal": 3,
+        "name": "created_at",
+        "type_info": "Timestamptz"
+      },
+      {
+        "ordinal": 4,
+        "name": "updated_at",
+        "type_info": "Timestamptz"
+      }
+    ],
+    "parameters": {
+      "Left": [
+        "Uuid"
+      ]
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "c6ee0ebdcf82d8a902a3d1b7bcd9d0d740c0cd523d91d0996ba825a201f4f80e"
+}

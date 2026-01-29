@@ -1,0 +1,38 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT \n                b.id as \"id: _\", \n                b.title, \n                bo.opened_at as \"opened_at: _\",\n                bo.tab_index as \"tab_index: _\"\n            FROM block_opens bo\n            JOIN blocks b on b.id = bo.block_id\n            ORDER BY bo.tab_index ASC\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "id: _",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "title",
+        "ordinal": 1,
+        "type_info": "Text"
+      },
+      {
+        "name": "opened_at: _",
+        "ordinal": 2,
+        "type_info": "Text"
+      },
+      {
+        "name": "tab_index: _",
+        "ordinal": 3,
+        "type_info": "Integer"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false,
+      false,
+      false
+    ]
+  },
+  "hash": "96a965a899b0ea637a947350ac34a65c5299f35a42c42f0a0693238c75c9a6b3"
+}

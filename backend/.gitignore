@@ -29,4 +29,3 @@ rust-project.json
 
 data/
 logs/
-**/*.sqlx
