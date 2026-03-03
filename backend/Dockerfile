@@ -3,7 +3,7 @@ FROM rust:1.88.0-alpine as builder
 WORKDIR /app
 
 # Install build dependencies
-RUN apk add --no-cache musl-dev build-base
+RUN apk add --no-cache musl-dev build-base curl
 
 # Cache dependencies
 COPY Cargo.toml Cargo.toml
@@ -26,6 +26,8 @@ RUN addgroup --system app && adduser --system --ingroup app app
 
 COPY --from=builder /app/target/release/api /app/api
 RUN chown app:app /app/api
+
+COPY --chown=app:app ./configs /app/configs
 
 USER app
 

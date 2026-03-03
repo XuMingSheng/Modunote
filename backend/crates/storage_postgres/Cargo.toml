@@ -4,12 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-sqlx = { workspace = true , features = ["runtime-tokio", "uuid", "chrono", "macros", "json", "postgres"] }
-
 async-trait = { workspace = true }
 chrono = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
+sqlx = { workspace = true , features = ["runtime-tokio", "uuid", "chrono", "macros", "json", "postgres"] }
 thiserror = { workspace = true }
 uuid = { workspace = true }
 

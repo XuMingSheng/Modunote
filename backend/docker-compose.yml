@@ -1,16 +1,20 @@
 services:
   backend:
     build:
-      context: ..
-      dockerfile: backend/Dockerfile
+      context: .
+      dockerfile: Dockerfile
     environment:
+      APP_ENV: "dev"
+      SQLX_OFFLINE: "true"
       DATABASE_URL: "postgres://modunote:modunote@postgres_dev:5432/modunote_dev"
-      LOG_DIR_PATH: "/app/logs"
-      RUST_LOG: "DEBUG"
-    depends_on:
-      - postgres_dev
+      OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4317"
     ports:
       - "8080:8080"
+    depends_on:
+      postgres_dev:
+        condition: service_healthy
+      otel-collector-healthcheck:
+        condition: service_healthy
 
   postgres_dev:
     image: postgres:16
@@ -22,6 +26,12 @@ services:
       POSTGRES_DB: modunote_dev
     volumes:
       - postgres_dev_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U modunote -d modunote_dev"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   postgres_test:
     image: postgres:16
@@ -33,6 +43,85 @@ services:
       POSTGRES_DB: modunote_test
     volumes:
       - postgres_test_data:/var/lib/postgresql/data
+
+  otel-collector:
+    image: ghcr.io/open-telemetry/opentelemetry-collector-releases/opentelemetry-collector-contrib:0.121.0
+    command: ["--config=/etc/otelcol/otel-collector-config.yaml"]
+    volumes:
+      - ./otel/:/etc/otelcol/
+    ports:
+      - "4317:4317" # OTLP gRPC receiver
+    depends_on:
+      jaeger:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+
+  otel-collector-healthcheck:
+    image: busybox:latest
+    # This magic line makes the sidecar "live inside" the OTel container's network
+    network_mode: "service:otel-collector"
+    command: sh -c "while true; do sleep 3600; done"
+    healthcheck:
+      # Now we can use wget because busybox has it!
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --tries=1 --spider http://localhost:13133/ || exit 1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+    depends_on:
+      - otel-collector
+
+  # Jaeger: To view traces
+  jaeger:
+    image: jaegertracing/jaeger:2.11.0
+    ports:
+      - "16686:16686" # Web UI
+    environment:
+      # In v2, you can often run with zero config for local dev
+      - METRICS_STORAGE_TYPE=prometheus
+    healthcheck:
+      # Jaeger v2 health check moved to the OTel standard status port
+      test:
+        [
+          "CMD-SHELL",
+          "wget --quiet --tries=1 --spider http://localhost:13133/status || exit 1",
+        ]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+
+  # Loki: To store JSON logs
+  loki:
+    image: grafana/loki:3.0.0
+    command: -config.file=/mnt/config/loki-config.yaml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./otel/:/mnt/config/
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 3100 || exit 1"]
+      interval: 5s
+      timeout: 2s
+      retries: 5
+      start_period: 10s
+
+  # Grafana: The dashboard to see everything (Loki + Jaeger)
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "8081:3000"
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    depends_on:
+      jaeger:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
 
 volumes:
   postgres_dev_data:

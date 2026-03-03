@@ -8,7 +8,7 @@ use utoipa_swagger_ui::SwaggerUi;
 
 use api::app_state::DatabaseImpl;
 use api::features;
-use api::telemetry::initialize_tracing;
+use api::telemetry::{initialize_tracing, set_panic_hook};
 use api::{AppConfig, AppResult as Result};
 use storage::database::Database;
 
@@ -25,9 +25,10 @@ async fn setup_db(database_url: &str) -> Result<DatabaseImpl> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = AppConfig::from_env()?;
+    let config = AppConfig::load()?;
 
-    initialize_tracing(&config.log_dir_path)?;
+    initialize_tracing(&config.telemetry)?;
+    set_panic_hook();
 
     let db = setup_db(&config.database_url).await?;
 

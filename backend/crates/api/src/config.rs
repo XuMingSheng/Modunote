@@ -1,24 +1,42 @@
-use tracing::debug;
+use serde::Deserialize;
+use std::path::PathBuf;
 
-use super::AppResult as Result;
+use crate::{AppError, AppResult as Result, telemetry::TelemetryConfig};
 
+#[derive(Deserialize, Debug)]
 pub struct AppConfig {
+    pub telemetry: TelemetryConfig,
     pub database_url: String,
-    pub log_dir_path: String,
 }
 
 impl AppConfig {
-    pub fn from_env() -> Result<Self> {
-        dotenvy::from_path("backend/.env").unwrap_or_else(|e| debug!("Error loading .env: {e}"));
+    pub fn load() -> Result<Self> {
+        if let Err(e) = dotenvy::dotenv() {
+            eprintln!("Warning: Failed to load .env file: {e}");
+        }
 
+        let env = std::env::var("APP_ENV")?;
         let database_url = std::env::var("DATABASE_URL")?;
-        let log_dir_path: String = std::env::var("LOG_DIR_PATH")?;
+        let table = Self::load_toml(&env)?;
 
         let config = Self {
+            telemetry: TelemetryConfig::load(&table)?,
             database_url,
-            log_dir_path,
         };
 
         Ok(config)
+    }
+
+    fn load_toml(env: &str) -> Result<toml::Table> {
+        let path = PathBuf::from("configs").join(format!("config.{env}.toml"));
+
+        let content = std::fs::read_to_string(&path).map_err(|e| AppError::ConfigRead {
+            path: path.clone(),
+            source: e,
+        })?;
+
+        let table: toml::Table = toml::from_str(&content)?;
+
+        Ok(table)
     }
 }
