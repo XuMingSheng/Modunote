@@ -13,8 +13,11 @@ export class CdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const prefix = this.stackName;
+    const lowerPrefix = prefix.toLowerCase();
+
     // ── VPC (no NAT gateway) ──────────────────
-    const vpc = new ec2.Vpc(this, "Vpc", {
+    const vpc = new ec2.Vpc(this, `${prefix}Vpc`, {
       maxAzs: 2,
       natGateways: 0,
       subnetConfiguration: [
@@ -27,27 +30,27 @@ export class CdkStack extends cdk.Stack {
     });
 
     // ── ECR repository ────────────────────────────────────────────────────
-    const ecrRepo = new ecr.Repository(this, "ApiRepository", {
-      repositoryName: "modunote-api",
+    const ecrRepo = new ecr.Repository(this, `${prefix}ApiRepo`, {
+      repositoryName: `${lowerPrefix}-api`,
       removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
     // ── Security groups ───────────────────────────────────────────────────
-    const appRunnerSg = new ec2.SecurityGroup(this, "AppRunnerSg", {
+    const appRunnerSg = new ec2.SecurityGroup(this, `${prefix}AppRunnerSg`, {
       vpc,
-      description: "Attached to App Runner VPC connector",
+      description: `${prefix} AppRunner Security Group`,
       allowAllOutbound: true,
     });
 
-    const dbSg = new ec2.SecurityGroup(this, "DbSg", {
+    const dbSg = new ec2.SecurityGroup(this, `${prefix}DbSg`, {
       vpc,
-      description: "RDS PostgreSQL",
+      description: `${prefix} RDS Security Group`,
       allowAllOutbound: false,
     });
-    dbSg.addIngressRule(appRunnerSg, ec2.Port.tcp(5432), "App Runner -> RDS");
+    dbSg.addIngressRule(appRunnerSg, ec2.Port.tcp(5432), "AllowAppRunner");
 
     // ── RDS PostgreSQL ────────────────────────────────────────────────────
-    const db = new rds.DatabaseInstance(this, "Db", {
+    const db = new rds.DatabaseInstance(this, `${prefix}DbInstance`, {
       engine: rds.DatabaseInstanceEngine.postgres({
         version: rds.PostgresEngineVersion.VER_16,
       }),
@@ -55,7 +58,7 @@ export class CdkStack extends cdk.Stack {
         ec2.InstanceClass.T3,
         ec2.InstanceSize.MICRO,
       ),
-      credentials: rds.Credentials.fromGeneratedSecret("modunote"),
+      credentials: rds.Credentials.fromGeneratedSecret(`${lowerPrefix}_admin`),
       vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       securityGroups: [dbSg],
@@ -90,52 +93,57 @@ export class CdkStack extends cdk.Stack {
     });
 
     // ── App Runner service (L1 to avoid alpha package dependency) ─────────
-    const appRunnerService = new apprunner.CfnService(this, "ApiService", {
-      serviceName: "modunote-api",
-      sourceConfiguration: {
-        authenticationConfiguration: {
-          accessRoleArn: accessRole.roleArn,
+    const appRunnerService = new apprunner.CfnService(
+      this,
+      `${prefix}ApiService`,
+      {
+        serviceName: "modunote-api",
+        sourceConfiguration: {
+          authenticationConfiguration: {
+            accessRoleArn: accessRole.roleArn,
+          },
+          autoDeploymentsEnabled: true,
+          imageRepository: {
+            imageIdentifier: `${ecrRepo.repositoryUri}:latest`,
+            imageRepositoryType: "ECR",
+            imageConfiguration: {
+              port: "8080",
+              runtimeEnvironmentVariables: [
+                { name: "APP_ENV", value: "cloud" },
+                { name: "DB_HOST", value: db.dbInstanceEndpointAddress },
+                { name: "DB_PORT", value: db.dbInstanceEndpointPort },
+                { name: "DB_NAME", value: "modunote" },
+              ],
+              runtimeEnvironmentSecrets: [
+                {
+                  name: "DB_USER",
+                  value: `${db.secret!.secretArn}:username::`,
+                },
+                {
+                  name: "DB_PASSWORD",
+                  value: `${db.secret!.secretArn}:password::`,
+                },
+              ],
+            },
+          },
         },
-        autoDeploymentsEnabled: true,
-        imageRepository: {
-          imageIdentifier: `${ecrRepo.repositoryUri}:latest`,
-          imageRepositoryType: "ECR",
-          imageConfiguration: {
-            port: "8080",
-            runtimeEnvironmentVariables: [
-              { name: "APP_ENV", value: "cloud" },
-              { name: "DB_HOST", value: db.dbInstanceEndpointAddress },
-              { name: "DB_PORT", value: db.dbInstanceEndpointPort },
-              { name: "DB_NAME", value: "modunote" },
-            ],
-            runtimeEnvironmentSecrets: [
-              {
-                name: "DB_USER",
-                value: `${db.secret!.secretArn}:username::`,
-              },
-              {
-                name: "DB_PASSWORD",
-                value: `${db.secret!.secretArn}:password::`,
-              },
-            ],
+        instanceConfiguration: {
+          instanceRoleArn: instanceRole.roleArn,
+          cpu: "1 vCPU",
+          memory: "2 GB",
+        },
+        networkConfiguration: {
+          egressConfiguration: {
+            egressType: "VPC",
+            vpcConnectorArn: vpcConnector.attrVpcConnectorArn,
           },
         },
       },
-      instanceConfiguration: {
-        instanceRoleArn: instanceRole.roleArn,
-        cpu: "1 vCPU",
-        memory: "2 GB",
-      },
-      networkConfiguration: {
-        egressConfiguration: {
-          egressType: "VPC",
-          vpcConnectorArn: vpcConnector.attrVpcConnectorArn,
-        },
-      },
-    });
+    );
 
     // ── S3 bucket for frontend ────────────────────────────────────────────
-    const frontendBucket = new s3.Bucket(this, "FrontendBucket", {
+    const frontendBucket = new s3.Bucket(this, `${prefix}FrontendBucket`, {
+      bucketName: `${lowerPrefix}-frontend-${this.account}`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       autoDeleteObjects: true,
