@@ -1,33 +1,40 @@
-# ---- Build stage ----
-FROM rust:1.88.0-alpine as builder
+# 1. Start with the chef image
+FROM lukemathwalker/cargo-chef:latest-rust-1.80-bookworm AS chef
 WORKDIR /app
+RUN apt-get update && apt-get install -y lld clang pkg-config libssl-dev
 
-# Install build dependencies
-RUN apk add --no-cache musl-dev build-base
+# 2. Planner: Prepare the "recipe"
+FROM chef AS planner
+COPY . .
+RUN cargo chef prepare --recipe-path recipe.json
 
-# Cache dependencies
-COPY Cargo.toml Cargo.toml
-COPY crates/api/Cargo.toml crates/api/Cargo.toml
-COPY crates/domain/Cargo.toml crates/domain/Cargo.toml
-COPY crates/storage/Cargo.toml crates/storage/Cargo.toml
-COPY crates/storage_sqlite/Cargo.toml crates/storage_sqlite/Cargo.toml
-COPY crates/storage_postgres/Cargo.toml crates/storage_postgres/Cargo.toml
-    
-# ---- Build the full app ----
+# 3. Builder: Compile dependencies only
+FROM chef AS builder 
+COPY --from=planner /app/recipe.json recipe.json
+# This layer is cached until you change a dependency in Cargo.toml
+RUN cargo chef cook --release --recipe-path recipe.json
+
+# Now copy the actual source code and build the app
 COPY . .
 RUN cargo build --release -p api
 
-# ---- Runtime stage ----
-FROM debian:bookworm-slim
+# 4. Runtime: Keep it tiny
+# Note: Using alpine for both stages makes life easier with musl/libc compatibility
+FROM debian:bookworm-slim AS runtime
 WORKDIR /app
 
-# Create a non-root user and group
-RUN addgroup --system app && adduser --system --ingroup app app
+RUN apt-get update && apt-get install -y \
+    ca-certificates \
+    libssl3 \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY --from=builder /app/target/release/api /app/api
-RUN chown app:app /app/api
-
+# Create a non-root user
+RUN useradd -ms /bin/bash app
 USER app
+
+# Copy binary and configs
+COPY --from=builder --chown=app:app /app/target/release/api /app/api
+COPY --chown=app:app ./configs /app/configs
 
 EXPOSE 8080
 CMD ["./api"]

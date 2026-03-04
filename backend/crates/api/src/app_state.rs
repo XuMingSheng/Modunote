@@ -27,7 +27,7 @@ cfg_if::cfg_if! {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct Repositories {
     pub blocks: BlockRepositoryImpl,
     pub block_directional_links: BlockDirectionalLinkRepositoryImpl,
@@ -37,16 +37,11 @@ pub struct Repositories {
 
 impl Repositories {
     pub fn new() -> Self {
-        Self {
-            blocks: BlockRepositoryImpl::new(),
-            block_directional_links: BlockDirectionalLinkRepositoryImpl::new(),
-            block_related_links: BlockRelatedLinkRepositoryImpl::new(),
-            workspaces: WorkspaceRepositoryImpl::new(),
-        }
+        Self::default()
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct QueryServices {
     pub blocks: BlockQueryServiceImpl,
     pub block_links: BlockLinkQueryServiceImpl,
@@ -54,10 +49,7 @@ pub struct QueryServices {
 
 impl QueryServices {
     pub fn new() -> Self {
-        Self {
-            blocks: BlockQueryServiceImpl::new(),
-            block_links: BlockLinkQueryServiceImpl::new(),
-        }
+        Self::default()
     }
 }
 

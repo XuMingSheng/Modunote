@@ -1,0 +1,50 @@
+auth_enabled: false
+
+server:
+  http_listen_port: 3100
+  grpc_listen_port: 9096
+
+common:
+  instance_addr: 127.0.0.1
+  path_prefix: /tmp/loki
+  storage:
+    filesystem:
+      chunks_directory: /tmp/loki/chunks
+      rules_directory: /tmp/loki/rules
+  replication_factor: 1
+  ring:
+    kvstore:
+      store: inmemory
+
+# In Loki 3.0+, OTLP is often configured here or via limits
+distributor:
+  otlp_config:
+    # This automatically converts OTLP service.name -> service_name
+    default_resource_attributes_as_index_labels:
+      [service.name, deployment.environment]
+
+limits_config:
+  allow_structured_metadata: true
+  reject_old_samples: true
+  reject_old_samples_max_age: 168h
+
+schema_config:
+  configs:
+    - from: 2024-04-01
+      store: tsdb
+      object_store: filesystem # This is now the source of truth
+      schema: v13
+      index:
+        prefix: index_
+        period: 24h
+
+storage_config:
+  tsdb_shipper:
+    active_index_directory: /tmp/loki/index
+    cache_location: /tmp/loki/index_cache
+    # shared_store REMOVED - it is now automatic
+
+compactor:
+  working_directory: /tmp/loki/compactor
+  # shared_store REMOVED
+  delete_request_store: filesystem # Required replacement for shared_store here
