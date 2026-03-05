@@ -2,7 +2,7 @@
 FROM node:20-alpine AS builder
 WORKDIR /web
 
-RUN npm install -g pnpm
+RUN npm install -g pnpm@10.30.3
 
 COPY frontend/package.json frontend/pnpm-lock.yaml ./
 RUN pnpm install --frozen-lockfile
