@@ -147,6 +147,7 @@ export class CdkStack extends cdk.Stack {
                 { name: "DB_NAME", value: "modunote" },
                 { name: "SQLX_OFFLINE", value: "true" },
                 { name: "OTEL_SERVICE_NAME", value: lowerPrefix },
+                { name: "OTEL_EXPORTER_OTLP_ENDPOINT", value: "" },
               ],
               runtimeEnvironmentSecrets: [
                 {
