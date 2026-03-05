@@ -7,7 +7,6 @@ pub struct TelemetryConfig {
     pub level: String,
     pub otel_service_name: String,
     pub otel_exporter_otlp_endpoint: String,
-    pub honeycomb_api_key: String,
 }
 
 impl TelemetryConfig {
@@ -22,7 +21,6 @@ impl TelemetryConfig {
                 "OTEL_EXPORTER_OTLP_ENDPOINT",
                 sub_table,
             )?,
-            honeycomb_api_key: load_value("honeycomb_api_key", "HONEYCOMB_API_KEY", sub_table)?,
         };
 
         Ok(config)

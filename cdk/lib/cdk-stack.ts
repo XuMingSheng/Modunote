@@ -96,6 +96,10 @@ export class CdkStack extends cdk.Stack {
     if (db.secret!.encryptionKey) {
       db.secret!.encryptionKey.grantDecrypt(instanceRole);
     }
+    // Grant permissions to write to X-Ray
+    instanceRole.addManagedPolicy(
+      iam.ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess"),
+    );
 
     // ── App Runner VPC connector ──────────────────────────────────────────
     const vpcConnector = new apprunner.CfnVpcConnector(this, "VpcConnector", {
@@ -103,12 +107,29 @@ export class CdkStack extends cdk.Stack {
       securityGroups: [appRunnerSg.securityGroupId],
     });
 
+    // ── Observability Configuration (For X-Ray) ──────────────────
+    const observabilityConfig = new apprunner.CfnObservabilityConfiguration(
+      this,
+      `${prefix}ObservabilityConfig`,
+      {
+        observabilityConfigurationName: `${prefix}-observability`,
+        traceConfiguration: {
+          vendor: "AWSXRAY",
+        },
+      },
+    );
+
     // ── App Runner service (L1 to avoid alpha package dependency) ─────────
     const appRunnerService = new apprunner.CfnService(
       this,
       `${prefix}ApiService`,
       {
         serviceName: `${lowerPrefix}-api`,
+        observabilityConfiguration: {
+          observabilityEnabled: true,
+          observabilityConfigurationArn:
+            observabilityConfig.attrObservabilityConfigurationArn,
+        },
         sourceConfiguration: {
           authenticationConfiguration: {
             accessRoleArn: accessRole.roleArn,
@@ -125,14 +146,6 @@ export class CdkStack extends cdk.Stack {
                 { name: "DB_PORT", value: db.dbInstanceEndpointPort },
                 { name: "DB_NAME", value: "modunote" },
                 { name: "SQLX_OFFLINE", value: "true" },
-                {
-                  name: "OTEL_EXPORTER_OTLP_ENDPOINT",
-                  value: "https://api.honeycomb.io:443",
-                },
-                {
-                  name: "HONEYCOMB_API_KEY",
-                  value: process.env.HONEYCOMB_API_KEY,
-                },
                 { name: "OTEL_SERVICE_NAME", value: lowerPrefix },
               ],
               runtimeEnvironmentSecrets: [

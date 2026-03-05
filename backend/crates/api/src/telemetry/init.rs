@@ -1,5 +1,5 @@
 use opentelemetry::{KeyValue, trace::TracerProvider};
-use opentelemetry_otlp::{WithExportConfig, WithTonicConfig, tonic_types::metadata::MetadataMap};
+use opentelemetry_otlp::{WithExportConfig, WithTonicConfig};
 use opentelemetry_sdk::{Resource, trace::SdkTracerProvider};
 use tonic::transport::ClientTlsConfig;
 use tracing_opentelemetry::OpenTelemetryLayer;
@@ -17,7 +17,11 @@ pub fn initialize_tracing(config: &TelemetryConfig) -> Result<()> {
         .with_target(true)
         .with_filter(EnvFilter::new(&config.level));
 
-    let otel_layer = get_otel_layer(config)?;
+    let otel_layer = if config.otel_exporter_otlp_endpoint.is_empty() {
+        None
+    } else {
+        Some(get_otel_layer(config)?)
+    };
 
     tracing_subscriber::registry()
         .with(otel_layer)
@@ -30,13 +34,6 @@ pub fn initialize_tracing(config: &TelemetryConfig) -> Result<()> {
 fn get_otel_layer(
     config: &TelemetryConfig,
 ) -> Result<OpenTelemetryLayer<Registry, opentelemetry_sdk::trace::Tracer>> {
-    let mut metadata = MetadataMap::new();
-
-    metadata.insert(
-        "x-honeycomb-team",
-        config.honeycomb_api_key.parse().unwrap(),
-    );
-
     let mut tls_config = ClientTlsConfig::new();
 
     // Enable TLS if the endpoint starts with https
@@ -48,7 +45,6 @@ fn get_otel_layer(
     let exporter = opentelemetry_otlp::SpanExporter::builder()
         .with_tonic() // This requires the "grpc-tonic" feature
         .with_endpoint(&config.otel_exporter_otlp_endpoint)
-        .with_metadata(metadata)
         .with_tls_config(tls_config)
         .build()?;
 
