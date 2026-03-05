@@ -5,7 +5,7 @@ use tonic::transport::ClientTlsConfig;
 use tracing_opentelemetry::OpenTelemetryLayer;
 use tracing_subscriber::{EnvFilter, Layer, Registry, fmt, prelude::*};
 
-use super::error::TelemetryResult as Result;
+use super::{config::OpentelemetryConfig, error::TelemetryResult as Result};
 use crate::telemetry::TelemetryConfig;
 
 pub fn initialize_tracing(config: &TelemetryConfig) -> Result<()> {
@@ -17,10 +17,10 @@ pub fn initialize_tracing(config: &TelemetryConfig) -> Result<()> {
         .with_target(true)
         .with_filter(EnvFilter::new(&config.level));
 
-    let otel_layer = if config.otel_exporter_otlp_endpoint.is_empty() {
-        None
+    let otel_layer = if let Some(otel_config) = &config.otel {
+        Some(get_otel_layer(otel_config)?)
     } else {
-        Some(get_otel_layer(config)?)
+        None
     };
 
     tracing_subscriber::registry()
@@ -32,25 +32,25 @@ pub fn initialize_tracing(config: &TelemetryConfig) -> Result<()> {
 }
 
 fn get_otel_layer(
-    config: &TelemetryConfig,
+    config: &OpentelemetryConfig,
 ) -> Result<OpenTelemetryLayer<Registry, opentelemetry_sdk::trace::Tracer>> {
     let mut tls_config = ClientTlsConfig::new();
 
     // Enable TLS if the endpoint starts with https
     // use the CA certificates installed in the Dockerfile
-    if config.otel_exporter_otlp_endpoint.starts_with("https") {
+    if config.exporter_otlp_endpoint.starts_with("https") {
         tls_config = tls_config.with_native_roots();
     }
 
     let exporter = opentelemetry_otlp::SpanExporter::builder()
         .with_tonic() // This requires the "grpc-tonic" feature
-        .with_endpoint(&config.otel_exporter_otlp_endpoint)
+        .with_endpoint(&config.exporter_otlp_endpoint)
         .with_tls_config(tls_config)
         .build()?;
 
     let resource = Resource::builder()
         .with_attributes(vec![
-            KeyValue::new("service.name", config.otel_service_name.clone()),
+            KeyValue::new("service.name", config.service_name.clone()),
             KeyValue::new("service.version", env!("CARGO_PKG_VERSION")),
         ])
         .build();

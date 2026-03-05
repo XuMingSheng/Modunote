@@ -142,12 +142,11 @@ export class CdkStack extends cdk.Stack {
               port: "8080",
               runtimeEnvironmentVariables: [
                 { name: "APP_ENV", value: "cloud" },
+                { name: "SQLX_OFFLINE", value: "true" },
                 { name: "DB_HOST", value: db.dbInstanceEndpointAddress },
                 { name: "DB_PORT", value: db.dbInstanceEndpointPort },
                 { name: "DB_NAME", value: "modunote" },
-                { name: "SQLX_OFFLINE", value: "true" },
-                { name: "OTEL_SERVICE_NAME", value: lowerPrefix },
-                { name: "OTEL_EXPORTER_OTLP_ENDPOINT", value: "" },
+                { name: "OTEL_ENABLED", value: "false" },
               ],
               runtimeEnvironmentSecrets: [
                 {
