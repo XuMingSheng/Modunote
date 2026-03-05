@@ -17,9 +17,8 @@ pub(crate) struct ErrorResponse {
 
 #[derive(thiserror::Error, Debug)]
 pub(crate) enum GetOpenedBlockError {
-    #[error("Validation failed: {0}")]
-    InputValidation(String),
-
+    // #[error("Validation failed: {0}")]
+    // InputValidation(String),
     #[error(transparent)]
     BlockQueryService(#[from] BlockQueryServiceError),
 }
@@ -27,7 +26,7 @@ pub(crate) enum GetOpenedBlockError {
 impl IntoResponse for GetOpenedBlockError {
     fn into_response(self) -> Response {
         let (status, msg) = match &self {
-            Self::InputValidation(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
+            // Self::InputValidation(msg) => (StatusCode::BAD_REQUEST, msg.clone()),
             Self::BlockQueryService(err) => {
                 error!(error = ?err, "Block query service failure");
 
