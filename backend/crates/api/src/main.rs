@@ -50,9 +50,9 @@ async fn main() -> Result<()> {
 
     let listener = tokio::net::TcpListener::bind(&addr).await?;
 
-    axum::serve(listener, app).await?;
-
     tracing::info!("Server starting on on http://{addr}");
+
+    axum::serve(listener, app).await?;
 
     Ok(())
 }

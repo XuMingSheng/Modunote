@@ -97,9 +97,9 @@ export class CdkStack extends cdk.Stack {
       db.secret!.encryptionKey.grantDecrypt(instanceRole);
     }
     // Grant permissions to write to X-Ray
-    instanceRole.addManagedPolicy(
-      iam.ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess"),
-    );
+    // instanceRole.addManagedPolicy(
+    //   iam.ManagedPolicy.fromAwsManagedPolicyName("AWSXRayDaemonWriteAccess"),
+    // );
 
     // ── App Runner VPC connector ──────────────────────────────────────────
     const vpcConnector = new apprunner.CfnVpcConnector(this, "VpcConnector", {
@@ -108,16 +108,16 @@ export class CdkStack extends cdk.Stack {
     });
 
     // ── Observability Configuration (For X-Ray) ──────────────────
-    const observabilityConfig = new apprunner.CfnObservabilityConfiguration(
-      this,
-      `${prefix}ObservabilityConfig`,
-      {
-        observabilityConfigurationName: `${prefix}-observability`,
-        traceConfiguration: {
-          vendor: "AWSXRAY",
-        },
-      },
-    );
+    // const observabilityConfig = new apprunner.CfnObservabilityConfiguration(
+    //   this,
+    //   `${prefix}ObservabilityConfig`,
+    //   {
+    //     observabilityConfigurationName: `${prefix}-observability`,
+    //     traceConfiguration: {
+    //       vendor: "AWSXRAY",
+    //     },
+    //   },
+    // );
 
     // ── App Runner service (L1 to avoid alpha package dependency) ─────────
     const appRunnerService = new apprunner.CfnService(
@@ -125,11 +125,11 @@ export class CdkStack extends cdk.Stack {
       `${prefix}ApiService`,
       {
         serviceName: `${lowerPrefix}-api`,
-        observabilityConfiguration: {
-          observabilityEnabled: true,
-          observabilityConfigurationArn:
-            observabilityConfig.attrObservabilityConfigurationArn,
-        },
+        // observabilityConfiguration: {
+        //   observabilityEnabled: true,
+        //   observabilityConfigurationArn:
+        //     observabilityConfig.attrObservabilityConfigurationArn,
+        // },
         sourceConfiguration: {
           authenticationConfiguration: {
             accessRoleArn: accessRole.roleArn,
