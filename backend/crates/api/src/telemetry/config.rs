@@ -5,7 +5,9 @@ use crate::{AppError, AppResult as Result};
 #[derive(Deserialize, Debug)]
 pub struct TelemetryConfig {
     pub level: String,
+    pub otel_service_name: String,
     pub otel_exporter_otlp_endpoint: String,
+    pub honeycomb_api_key: String,
 }
 
 impl TelemetryConfig {
@@ -14,11 +16,13 @@ impl TelemetryConfig {
 
         let config = Self {
             level: load_value("level", "RUST_LOG_LEVEL", sub_table)?,
+            otel_service_name: load_value("otel_service_name", "OTEL_SERVICE_NAME", sub_table)?,
             otel_exporter_otlp_endpoint: load_value(
                 "otel_exporter_otlp_endpoin",
                 "OTEL_EXPORTER_OTLP_ENDPOINT",
                 sub_table,
             )?,
+            honeycomb_api_key: load_value("honeycomb_api_key", "HONEYCOMB_API_KEY", sub_table)?,
         };
 
         Ok(config)

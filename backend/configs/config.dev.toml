@@ -1,2 +1,4 @@
 [telemetry]
 level = "info"
+otel_service_name = "modunote-api-dev"
+honeycomb_api_key = "placeholder"

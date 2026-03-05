@@ -124,6 +124,16 @@ export class CdkStack extends cdk.Stack {
                 { name: "DB_HOST", value: db.dbInstanceEndpointAddress },
                 { name: "DB_PORT", value: db.dbInstanceEndpointPort },
                 { name: "DB_NAME", value: "modunote" },
+                { name: "SQLX_OFFLINE", value: "true" },
+                {
+                  name: "OTEL_EXPORTER_OTLP_ENDPOINT",
+                  value: "https://api.honeycomb.io:443",
+                },
+                {
+                  name: "HONEYCOMB_API_KEY",
+                  value: process.env.HONEYCOMB_API_KEY,
+                },
+                { name: "OTEL_SERVICE_NAME", value: lowerPrefix },
               ],
               runtimeEnvironmentSecrets: [
                 {

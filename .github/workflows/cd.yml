@@ -27,6 +27,8 @@ jobs:
     needs: detect-changes
     if: needs.detect-changes.outputs.cdk_or_backend == 'true'
     runs-on: ubuntu-latest
+    env:
+      HONEYCOMB_API_KEY: ${{ secrets.HONEYCOMB_API_KEY }}
     steps:
       - uses: actions/checkout@v4
 
