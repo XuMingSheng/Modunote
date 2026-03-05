@@ -6,8 +6,10 @@ import * as s3 from "aws-cdk-lib/aws-s3";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as origins from "aws-cdk-lib/aws-cloudfront-origins";
 import * as apprunner from "aws-cdk-lib/aws-apprunner";
+import * as ecr_assets from "aws-cdk-lib/aws-ecr-assets";
 import * as iam from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
+import * as path from "path";
 
 export class CdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -16,10 +18,10 @@ export class CdkStack extends cdk.Stack {
     const prefix = this.stackName;
     const lowerPrefix = prefix.toLowerCase();
 
-    // ── VPC (no NAT gateway) ──────────────────
+    // ── VPC ──────────────────
     const vpc = new ec2.Vpc(this, `${prefix}Vpc`, {
       maxAzs: 2,
-      natGateways: 0,
+      natGateways: 0, // Cost-saving for small apps; uses isolated subnets
       subnetConfiguration: [
         {
           name: "Isolated",
@@ -29,25 +31,35 @@ export class CdkStack extends cdk.Stack {
       ],
     });
 
-    // ── ECR repository ────────────────────────────────────────────────────
-    const ecrRepo = new ecr.Repository(this, `${prefix}ApiRepo`, {
-      repositoryName: `${lowerPrefix}-api`,
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
+    // ── Docker Image Asset  ──────────────────────────
+    // This replaces manual ECR repository management.
+    // CDK will build the Dockerfile in ../backend/ and push it to a
+    // CDK-managed staging repository automatically.
+    const backendAsset = new ecr_assets.DockerImageAsset(
+      this,
+      `${prefix}BackendAsset`,
+      {
+        directory: path.join(__dirname, "../../backend"),
+      },
+    );
 
     // ── Security groups ───────────────────────────────────────────────────
     const appRunnerSg = new ec2.SecurityGroup(this, `${prefix}AppRunnerSg`, {
       vpc,
-      description: `${prefix} AppRunner Security Group`,
+      description: `${prefix} AppRunner Connector SG`,
       allowAllOutbound: true,
     });
 
     const dbSg = new ec2.SecurityGroup(this, `${prefix}DbSg`, {
       vpc,
-      description: `${prefix} RDS Security Group`,
+      description: `${prefix} RDS Database SG`,
       allowAllOutbound: false,
     });
-    dbSg.addIngressRule(appRunnerSg, ec2.Port.tcp(5432), "AllowAppRunner");
+    dbSg.addIngressRule(
+      appRunnerSg,
+      ec2.Port.tcp(5432),
+      "AllowAppRunnerPostgres",
+    );
 
     // ── RDS PostgreSQL ────────────────────────────────────────────────────
     const db = new rds.DatabaseInstance(this, `${prefix}DbInstance`, {
@@ -63,32 +75,31 @@ export class CdkStack extends cdk.Stack {
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       securityGroups: [dbSg],
       databaseName: "modunote",
-      removalPolicy: cdk.RemovalPolicy.SNAPSHOT,
-      deletionProtection: true,
+      // Use DESTROY for dev/learning, RETAIN for production
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      deletionProtection: false,
     });
 
     // ── IAM roles for App Runner ──────────────────────────────────────────
-    const accessRole = new iam.Role(this, "AppRunnerAccessRole", {
+    // The Access Role allows App Runner to pull the image from the CDK staging ECR
+    const accessRole = new iam.Role(this, `${prefix}AppRunnerAccessRole`, {
       assumedBy: new iam.ServicePrincipal("build.apprunner.amazonaws.com"),
-      managedPolicies: [
-        iam.ManagedPolicy.fromAwsManagedPolicyName(
-          "service-role/AWSAppRunnerServicePolicyForECRAccess",
-        ),
-      ],
     });
+    // Grant the role permission to pull the specific asset image
+    backendAsset.repository.grantPull(accessRole);
 
     const instanceRole = new iam.Role(this, "AppRunnerInstanceRole", {
       assumedBy: new iam.ServicePrincipal("tasks.apprunner.amazonaws.com"),
     });
     db.secret!.grantRead(instanceRole);
     // Allow App Runner to decrypt the secret
-    db.secret!.encryptionKey?.grantDecrypt(instanceRole);
+    if (db.secret!.encryptionKey) {
+      db.secret!.encryptionKey.grantDecrypt(instanceRole);
+    }
 
     // ── App Runner VPC connector ──────────────────────────────────────────
-    const isolatedSubnetIds = vpc.isolatedSubnets.map((s) => s.subnetId);
-
     const vpcConnector = new apprunner.CfnVpcConnector(this, "VpcConnector", {
-      subnets: isolatedSubnetIds,
+      subnets: vpc.isolatedSubnets.map((s) => s.subnetId),
       securityGroups: [appRunnerSg.securityGroupId],
     });
 
@@ -97,14 +108,14 @@ export class CdkStack extends cdk.Stack {
       this,
       `${prefix}ApiService`,
       {
-        serviceName: "modunote-api",
+        serviceName: `${lowerPrefix}-api`,
         sourceConfiguration: {
           authenticationConfiguration: {
             accessRoleArn: accessRole.roleArn,
           },
-          autoDeploymentsEnabled: true,
+          autoDeploymentsEnabled: false, // Usually set to true only for code-based services
           imageRepository: {
-            imageIdentifier: `${ecrRepo.repositoryUri}:latest`,
+            imageIdentifier: backendAsset.imageUri, // Uses the auto-built Asset URI
             imageRepositoryType: "ECR",
             imageConfiguration: {
               port: "8080",
@@ -140,6 +151,9 @@ export class CdkStack extends cdk.Stack {
         },
       },
     );
+
+    // Ensure App Runner doesn't try to create until the image is definitely built/pushed
+    appRunnerService.node.addDependency(backendAsset);
 
     // ── S3 bucket for frontend ────────────────────────────────────────────
     const frontendBucket = new s3.Bucket(this, `${prefix}FrontendBucket`, {
@@ -177,9 +191,6 @@ export class CdkStack extends cdk.Stack {
     });
     new cdk.CfnOutput(this, "ApiUrl", {
       value: `https://${appRunnerService.attrServiceUrl}`,
-    });
-    new cdk.CfnOutput(this, "EcrRepositoryUri", {
-      value: ecrRepo.repositoryUri,
     });
     new cdk.CfnOutput(this, "FrontendBucketName", {
       value: frontendBucket.bucketName,

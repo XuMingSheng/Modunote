@@ -21,13 +21,12 @@ jobs:
         id: filter
         with:
           filters: |
-            cdk: ['cdk/**']
-            backend: ['backend/**']
+            cdk_or_backend: ['cdk/**', 'backend/**']
             frontend: ['frontend/**']
 
-  deploy-infra:
+  deploy-infra-and-backend:
     needs: detect-changes
-    if: needs.detect-changes.outputs.cdk == 'true'
+    if: needs.detect-changes.outputs.cdk_or_backend == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -37,53 +36,30 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: "npm"
+          cache-dependency-path: cdk/package-lock.json
 
       - name: Install CDK dependencies
         working-directory: cdk
         run: npm ci
 
-      - name: Deploy CDK stack
+      # Note: The CDK 'DockerImageAsset' requires the Docker daemon.
+      # GitHub's ubuntu-latest runners have Docker pre-installed and running.
+      - name: Deploy CDK Stack
         working-directory: cdk
         run: npx cdk deploy --require-approval never
 
-  deploy-backend:
-    needs: [detect-changes, deploy-infra]
-    if: |
-      always() &&
-      needs.detect-changes.outputs.backend == 'true' &&
-      (needs.deploy-infra.result == 'success' || needs.deploy-infra.result == 'skipped')
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
-          aws-region: ${{ vars.AWS_REGION }}
-
-      - name: Log in to ECR
-        id: login-ecr # Must match the env variable below
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push Docker image
-        env:
-          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          REPOSITORY: ${{ vars.ECR_REPOSITORY_NAME }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $REGISTRY/$REPOSITORY:$IMAGE_TAG \
-                       -t $REGISTRY/$REPOSITORY:latest \
-                       backend/
-          docker push $REGISTRY/$REPOSITORY:$IMAGE_TAG
-          docker push $REGISTRY/$REPOSITORY:latest
-
   deploy-frontend:
-    needs: [detect-changes, deploy-infra]
+    needs: [detect-changes, deploy-infra-and-backend]
     if: |
       always() &&
-      needs.detect-changes.outputs.frontend == 'true' &&
-      (needs.deploy-infra.result == 'success' || needs.deploy-infra.result == 'skipped')
+      (needs.detect-changes.outputs.frontend == 'true' || needs.detect-changes.outputs.cdk_or_backend == 'true') &&
+      (needs.deploy-infra-and-backend.result == 'success' || needs.deploy-infra-and-backend.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -104,6 +80,8 @@ jobs:
           cache: pnpm
           cache-dependency-path: frontend/pnpm-lock.yaml
 
+      # Note: VITE_API_URL should point to the App Runner URL.
+      # After the first deploy, you can set this in GitHub Variables.
       - name: Install frontend dependencies
         working-directory: frontend
         run: pnpm install --frozen-lockfile
