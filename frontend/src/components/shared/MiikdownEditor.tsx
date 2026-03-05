@@ -22,7 +22,7 @@ const CrepeEditor = ({ id, content, onUpdate }: CrepeEditorProps) => {
       });
 
       crepe.on((api) => {
-        api.markdownUpdated((ctx, markdown, prevMarkdown) => {
+        api.markdownUpdated((_ctx, markdown, _prevMarkdown) => {
           onUpdate(markdown);
         });
       });
