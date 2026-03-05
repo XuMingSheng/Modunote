@@ -12,8 +12,7 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      cdk: ${{ steps.filter.outputs.cdk }}
-      backend: ${{ steps.filter.outputs.backend }}
+      cdk_or_backend: ${{ steps.filter.outputs.cdk_or_backend }}
       frontend: ${{ steps.filter.outputs.frontend }}
     steps:
       - uses: actions/checkout@v4
