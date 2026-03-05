@@ -147,6 +147,10 @@ export class CdkStack extends cdk.Stack {
                 { name: "DB_PORT", value: db.dbInstanceEndpointPort },
                 { name: "DB_NAME", value: "modunote" },
                 { name: "OTEL_ENABLED", value: "false" },
+                {
+                  name: "FRONTEND_URL",
+                  value: "https://d4b7b5p2kmlyv.cloudfront.net/",
+                },
               ],
               runtimeEnvironmentSecrets: [
                 {

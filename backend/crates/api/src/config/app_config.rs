@@ -1,12 +1,14 @@
 use serde::Deserialize;
 use std::path::PathBuf;
 
-use crate::{AppError, AppResult as Result, telemetry::TelemetryConfig};
+use super::{error::ConfigError, error::ConfigResult as Result, utils::load_value};
+use crate::telemetry::TelemetryConfig;
 
 #[derive(Deserialize, Debug)]
 pub struct AppConfig {
-    pub telemetry: TelemetryConfig,
     pub database_url: String,
+    pub frontend_url: String,
+    pub telemetry: TelemetryConfig,
 }
 
 impl AppConfig {
@@ -20,8 +22,9 @@ impl AppConfig {
         let table = load_toml(&env)?;
 
         let config = Self {
-            telemetry: TelemetryConfig::load(&table)?,
             database_url,
+            frontend_url: load_value("FRONTEND_URL", "frontend_url", &table)?,
+            telemetry: TelemetryConfig::load(&table)?,
         };
 
         Ok(config)
@@ -31,7 +34,7 @@ impl AppConfig {
 fn load_toml(env: &str) -> Result<toml::Table> {
     let path = PathBuf::from("configs").join(format!("config.{env}.toml"));
 
-    let content = std::fs::read_to_string(&path).map_err(|e| AppError::ConfigRead {
+    let content = std::fs::read_to_string(&path).map_err(|e| ConfigError::FileRead {
         path: path.clone(),
         source: e,
     })?;
@@ -52,6 +55,6 @@ fn resolve_database_url(env: &str) -> Result<String> {
         let db_name = std::env::var("DB_NAME")?;
         Ok(format!("postgresql://{user}:{pass}@{host}:5432/{db_name}"))
     } else {
-        Err(AppError::MissingConfig("DATABASE_URL".into()))
+        Err(ConfigError::MissingValue("DATABASE_URL".into()))
     }
 }

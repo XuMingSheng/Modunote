@@ -1,4 +1,6 @@
+frontend_url = "http://localhost:3000"
+
 [telemetry]
 level = "info"
-otel_enabled = "true"
+otel_enabled = true
 otel_service_name = "modunote-api-dev"

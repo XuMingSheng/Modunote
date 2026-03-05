@@ -1,7 +1,9 @@
 use std::sync::Arc;
 
 use api::app_state::AppState;
-use axum::Router;
+use axum::http::HeaderValue;
+use axum::{Router, http::Method, http::header};
+use tower_http::cors::CorsLayer;
 use tracing::instrument;
 use utoipa_axum::router::OpenApiRouter;
 use utoipa_swagger_ui::SwaggerUi;
@@ -9,7 +11,7 @@ use utoipa_swagger_ui::SwaggerUi;
 use api::app_state::DatabaseImpl;
 use api::features;
 use api::telemetry::{initialize_tracing, set_panic_hook};
-use api::{AppConfig, AppResult as Result};
+use api::{AppConfig, AppError, AppResult as Result};
 use storage::database::Database;
 
 #[instrument]
@@ -21,6 +23,32 @@ async fn setup_db(database_url: &str) -> Result<DatabaseImpl> {
     tracing::info!("Database initialized and migrated.");
 
     Ok(db)
+}
+
+fn configure_cors(config: &AppConfig) -> Result<CorsLayer> {
+    let frontend_url =
+        config
+            .frontend_url
+            .parse::<HeaderValue>()
+            .map_err(|e| AppError::ParseError {
+                var_name: "config.frontend_url".to_string(),
+                source: Box::new(e),
+            })?;
+
+    let cors = CorsLayer::new()
+        .allow_origin(frontend_url)
+        .allow_methods([
+            Method::GET,
+            Method::POST,
+            Method::PUT,
+            Method::DELETE,
+            Method::PATCH,
+            Method::OPTIONS,
+        ])
+        .allow_headers([header::CONTENT_TYPE, header::AUTHORIZATION, header::ACCEPT])
+        .allow_credentials(true);
+
+    Ok(cors)
 }
 
 #[tokio::main]
@@ -41,10 +69,13 @@ async fn main() -> Result<()> {
         .merge(features::search::routes())
         .split_for_parts();
 
+    let cors_layer = configure_cors(&config)?;
+
     let app = Router::new()
         .merge(router)
         .merge(SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", openapi))
-        .with_state(state);
+        .with_state(state)
+        .layer(cors_layer);
 
     let addr = "0.0.0.0:8080";
 
