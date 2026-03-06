@@ -149,7 +149,7 @@ export class CdkStack extends cdk.Stack {
                 { name: "OTEL_ENABLED", value: "false" },
                 {
                   name: "FRONTEND_URL",
-                  value: "https://d4b7b5p2kmlyv.cloudfront.net/",
+                  value: "https://d4b7b5p2kmlyv.cloudfront.net",
                 },
               ],
               runtimeEnvironmentSecrets: [
