@@ -303,3 +303,79 @@ where
     tx.rollback().await?;
     Ok(())
 }
+
+pub async fn assert_get_all_directional<'a, A, Q, BR, DR, RR, DB>(
+    query_service: &Q,
+    block_repo: &BR,
+    directional_repo: &DR,
+    related_repo: &RR,
+    conn: A,
+) -> Result<()>
+where
+    DB: Database,
+    Q: BlockLinkQueryService<DB>,
+    BR: BlockRepository<DB>,
+    DR: BlockDirectionalLinkRepository<DB>,
+    RR: BlockRelatedLinkRepository<DB>,
+    A: Acquire<'a, Database = DB>,
+    for<'c> &'c mut DB::Connection: Executor<'c, Database = DB> + Acquire<'c, Database = DB>,
+{
+    let mut conn = conn.acquire().await?;
+    let mut tx = conn.begin().await?;
+
+    let seeded = seed_link_graph(block_repo, directional_repo, related_repo, &mut tx).await;
+    let links = query_service.get_all_directional(&mut *tx).await?;
+
+    // The seeded graph creates 4 directional links (2 parents → target, target → 2 children)
+    assert_eq!(links.len(), 4);
+    assert!(
+        links
+            .iter()
+            .any(|l| l.block_to_id == seeded.target_id
+                && seeded.parent_ids.contains(&l.block_from_id))
+    );
+    assert!(
+        links
+            .iter()
+            .any(|l| l.block_from_id == seeded.target_id
+                && seeded.child_ids.contains(&l.block_to_id))
+    );
+
+    tx.rollback().await?;
+    Ok(())
+}
+
+pub async fn assert_get_all_related<'a, A, Q, BR, DR, RR, DB>(
+    query_service: &Q,
+    block_repo: &BR,
+    directional_repo: &DR,
+    related_repo: &RR,
+    conn: A,
+) -> Result<()>
+where
+    DB: Database,
+    Q: BlockLinkQueryService<DB>,
+    BR: BlockRepository<DB>,
+    DR: BlockDirectionalLinkRepository<DB>,
+    RR: BlockRelatedLinkRepository<DB>,
+    A: Acquire<'a, Database = DB>,
+    for<'c> &'c mut DB::Connection: Executor<'c, Database = DB> + Acquire<'c, Database = DB>,
+{
+    let mut conn = conn.acquire().await?;
+    let mut tx = conn.begin().await?;
+
+    let seeded = seed_link_graph(block_repo, directional_repo, related_repo, &mut tx).await;
+    let links = query_service.get_all_related(&mut *tx).await?;
+
+    // The seeded graph creates 2 related links (target ↔ related_one, target ↔ related_two)
+    assert_eq!(links.len(), 2);
+    for related_id in seeded.related_ids {
+        assert!(links.iter().any(|l| {
+            (l.block_a_id == seeded.target_id && l.block_b_id == related_id)
+                || (l.block_b_id == seeded.target_id && l.block_a_id == related_id)
+        }));
+    }
+
+    tx.rollback().await?;
+    Ok(())
+}

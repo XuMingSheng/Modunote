@@ -18,3 +18,12 @@ pub struct BlockSummaryDto {
     pub updated_at: DateTime<Utc>,
     pub opened_at: Option<DateTime<Utc>>,
 }
+
+#[derive(FromRow, Clone, Debug)]
+pub struct BlockExportDto {
+    pub id: Uuid,
+    pub title: String,
+    pub content: String,
+    pub created_at: DateTime<Utc>,
+    pub updated_at: DateTime<Utc>,
+}

@@ -4,7 +4,7 @@ import { BlockEditor } from "@/components/block/BlockEditor";
 import { LinkedBlocksSidebar } from "@/components/block/LinkedBlocksSidebar";
 import { useAppStore } from "@/store/useAppStore";
 
-export function BlocksPage() {
+export function BlockEditorPage() {
   const loadOpenedBlocks = useAppStore((state) => state.loadOpenedBlocks);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export function BlocksPage() {
       {/* Sidebar for open blocks */}
       <OpenedBlocksSidebar />
       {/* Center editor */}
-      <div className="flex-1 p-4 h-screen bg-white border-l border-gray-300">
+      <div className="flex-1 p-4 bg-white border-l border-gray-300 overflow-y-auto">
         <BlockEditor />
       </div>
       {/* Sidebar for linked blocks */}

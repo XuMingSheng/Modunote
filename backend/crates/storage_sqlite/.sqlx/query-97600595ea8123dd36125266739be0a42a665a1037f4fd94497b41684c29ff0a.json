@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                block_a_id as \"block_a_id: _\",\n                block_b_id as \"block_b_id: _\"\n            FROM block_related_links\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "block_a_id: _",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "block_b_id: _",
+        "ordinal": 1,
+        "type_info": "Blob"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "97600595ea8123dd36125266739be0a42a665a1037f4fd94497b41684c29ff0a"
+}

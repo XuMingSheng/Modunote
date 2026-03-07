@@ -75,9 +75,9 @@ export class CdkStack extends cdk.Stack {
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_ISOLATED },
       securityGroups: [dbSg],
       databaseName: "modunote",
-      // Use DESTROY for dev/learning, RETAIN for production
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      deletionProtection: false,
+      // Use DESTROY for dev/learning, SNAPSHOT for production
+      removalPolicy: cdk.RemovalPolicy.SNAPSHOT,
+      deletionProtection: true,
     });
 
     // ── IAM roles for App Runner ──────────────────────────────────────────
@@ -119,6 +119,36 @@ export class CdkStack extends cdk.Stack {
     //   },
     // );
 
+    // ── S3 bucket for frontend ────────────────────────────────────────────
+    const frontendBucket = new s3.Bucket(this, `${prefix}FrontendBucket`, {
+      bucketName: `${lowerPrefix}-frontend-${this.account}`,
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      removalPolicy: cdk.RemovalPolicy.RETAIN, // Keep the site files if stack is deleted
+      autoDeleteObjects: true,
+    });
+
+    // ── CloudFront distribution ───────────────────────────────────────────
+    const distribution = new cloudfront.Distribution(this, "Distribution", {
+      defaultBehavior: {
+        origin: origins.S3BucketOrigin.withOriginAccessControl(frontendBucket),
+        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
+      },
+      defaultRootObject: "index.html",
+      errorResponses: [
+        {
+          httpStatus: 403,
+          responseHttpStatus: 200,
+          responsePagePath: "/index.html",
+        },
+        {
+          httpStatus: 404,
+          responseHttpStatus: 200,
+          responsePagePath: "/index.html",
+        },
+      ],
+    });
+
     // ── App Runner service (L1 to avoid alpha package dependency) ─────────
     const appRunnerService = new apprunner.CfnService(
       this,
@@ -149,7 +179,7 @@ export class CdkStack extends cdk.Stack {
                 { name: "OTEL_ENABLED", value: "false" },
                 {
                   name: "FRONTEND_URL",
-                  value: "https://d4b7b5p2kmlyv.cloudfront.net",
+                  value: `https://${distribution.distributionDomainName}`,
                 },
               ],
               runtimeEnvironmentSecrets: [
@@ -181,36 +211,6 @@ export class CdkStack extends cdk.Stack {
 
     // Ensure App Runner doesn't try to create until the image is definitely built/pushed
     appRunnerService.node.addDependency(backendAsset);
-
-    // ── S3 bucket for frontend ────────────────────────────────────────────
-    const frontendBucket = new s3.Bucket(this, `${prefix}FrontendBucket`, {
-      bucketName: `${lowerPrefix}-frontend-${this.account}`,
-      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
-      removalPolicy: cdk.RemovalPolicy.DESTROY,
-      autoDeleteObjects: true,
-    });
-
-    // ── CloudFront distribution ───────────────────────────────────────────
-    const distribution = new cloudfront.Distribution(this, "Distribution", {
-      defaultBehavior: {
-        origin: origins.S3BucketOrigin.withOriginAccessControl(frontendBucket),
-        viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
-        cachePolicy: cloudfront.CachePolicy.CACHING_OPTIMIZED,
-      },
-      defaultRootObject: "index.html",
-      errorResponses: [
-        {
-          httpStatus: 403,
-          responseHttpStatus: 200,
-          responsePagePath: "/index.html",
-        },
-        {
-          httpStatus: 404,
-          responseHttpStatus: 200,
-          responsePagePath: "/index.html",
-        },
-      ],
-    });
 
     // ── Stack outputs ─────────────────────────────────────────────────────
     new cdk.CfnOutput(this, "FrontendUrl", {

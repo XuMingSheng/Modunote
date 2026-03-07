@@ -1,6 +1,6 @@
 {
   "db_name": "SQLite",
-  "query": "\n            SELECT\n                brl.id as \"link_id: _\",\n                b.id as \"block_id: _\",\n                b.title,\n                b.created_at as \"created_at: _\",\n                b.updated_at as \"updated_at: _\"\n            FROM block_related_links brl\n            JOIN blocks b ON (\n                (brl.block_a_id = $1 AND b.id = brl.block_b_id) OR \n                (brl.block_b_id = $1 AND b.id = brl.block_a_id)\n            )\n            WHERE brl.block_a_id = $1 OR brl.block_b_id = $1\n            ",
+  "query": "\n            SELECT\n                brl.id as \"link_id: _\",\n                b.id as \"block_id: _\",\n                b.title,\n                b.created_at as \"created_at: _\",\n                b.updated_at as \"updated_at: _\"\n            FROM block_related_links brl\n            JOIN blocks b ON (\n                (brl.block_a_id = $1 AND b.id = brl.block_b_id) OR\n                (brl.block_b_id = $1 AND b.id = brl.block_a_id)\n            )\n            WHERE brl.block_a_id = $1 OR brl.block_b_id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -40,5 +40,5 @@
       false
     ]
   },
-  "hash": "11e3e2f0735b9131273cfd9b3088494a81add06d3a08128f46c76c71d793691d"
+  "hash": "1d224bbe9d4339a37f8d5a9fb49453e73f1ddb6abd74250d3a3d12e8b3ab4416"
 }

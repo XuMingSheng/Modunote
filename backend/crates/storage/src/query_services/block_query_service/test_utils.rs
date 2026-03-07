@@ -8,6 +8,48 @@ use super::BlockQueryServiceResult as Result;
 use crate::query_services::BlockQueryService;
 use crate::repositories::{BlockRepository, WorkspaceRepository};
 
+pub async fn assert_get_all_returns_all_blocks<'a, A, Q, R, DB>(
+    query_service: &Q,
+    block_repo: &R,
+    conn: A,
+) -> Result<()>
+where
+    DB: Database,
+    Q: BlockQueryService<DB>,
+    R: BlockRepository<DB>,
+    A: Acquire<'a, Database = DB>,
+    for<'c> &'c mut DB::Connection: Executor<'c, Database = DB> + Acquire<'c, Database = DB>,
+{
+    let mut conn = conn.acquire().await?;
+    let mut tx = conn.begin().await?;
+
+    let block_a = Block::new("alpha", "content alpha");
+    let block_b = Block::new("beta", "content beta");
+
+    block_repo
+        .save(&block_a, &mut *tx)
+        .await
+        .expect("failed to save block a");
+    block_repo
+        .save(&block_b, &mut *tx)
+        .await
+        .expect("failed to save block b");
+
+    let all = query_service.get_all(&mut *tx).await?;
+
+    assert!(
+        all.iter()
+            .any(|b| b.id == block_a.id && b.content == "content alpha")
+    );
+    assert!(
+        all.iter()
+            .any(|b| b.id == block_b.id && b.content == "content beta")
+    );
+
+    tx.rollback().await?;
+    Ok(())
+}
+
 pub async fn assert_get_opened_orders_by_tab_index<'a, A, Q, BR, WR, DB>(
     query_service: &Q,
     block_repo: &BR,
