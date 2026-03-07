@@ -5,7 +5,8 @@ use uuid::Uuid;
 
 use storage::query_services::BlockLinkQueryService;
 use storage::query_services::block_link_query_service::{
-    AllLinkedBlocksDto, BlockLinkQueryServiceResult as Result, LinkedBlockDto,
+    AllLinkedBlocksDto, BlockLinkQueryServiceResult as Result, DirectionalLinkExportDto,
+    LinkedBlockDto, RelatedLinkExportDto,
 };
 
 #[derive(sqlx::Type, Debug)]
@@ -199,7 +200,7 @@ impl BlockLinkQueryService<Sqlite> for SqliteBlockLinkQueryService {
                 b.updated_at as "updated_at: _"
             FROM block_related_links brl
             JOIN blocks b ON (
-                (brl.block_a_id = $1 AND b.id = brl.block_b_id) OR 
+                (brl.block_a_id = $1 AND b.id = brl.block_b_id) OR
                 (brl.block_b_id = $1 AND b.id = brl.block_a_id)
             )
             WHERE brl.block_a_id = $1 OR brl.block_b_id = $1
@@ -210,5 +211,43 @@ impl BlockLinkQueryService<Sqlite> for SqliteBlockLinkQueryService {
         .await?;
 
         Ok(related_blocks)
+    }
+
+    async fn get_all_directional<'e, E>(&self, executor: E) -> Result<Vec<DirectionalLinkExportDto>>
+    where
+        E: Executor<'e, Database = Sqlite>,
+    {
+        let links = sqlx::query_as!(
+            DirectionalLinkExportDto,
+            r#"
+            SELECT
+                block_from_id as "block_from_id: _",
+                block_to_id as "block_to_id: _"
+            FROM block_directional_links
+            "#,
+        )
+        .fetch_all(executor)
+        .await?;
+
+        Ok(links)
+    }
+
+    async fn get_all_related<'e, E>(&self, executor: E) -> Result<Vec<RelatedLinkExportDto>>
+    where
+        E: Executor<'e, Database = Sqlite>,
+    {
+        let links = sqlx::query_as!(
+            RelatedLinkExportDto,
+            r#"
+            SELECT
+                block_a_id as "block_a_id: _",
+                block_b_id as "block_b_id: _"
+            FROM block_related_links
+            "#,
+        )
+        .fetch_all(executor)
+        .await?;
+
+        Ok(links)
     }
 }

@@ -1,0 +1,26 @@
+{
+  "db_name": "SQLite",
+  "query": "\n            SELECT\n                block_from_id as \"block_from_id: _\",\n                block_to_id as \"block_to_id: _\"\n            FROM block_directional_links\n            ",
+  "describe": {
+    "columns": [
+      {
+        "name": "block_from_id: _",
+        "ordinal": 0,
+        "type_info": "Blob"
+      },
+      {
+        "name": "block_to_id: _",
+        "ordinal": 1,
+        "type_info": "Blob"
+      }
+    ],
+    "parameters": {
+      "Right": 0
+    },
+    "nullable": [
+      false,
+      false
+    ]
+  },
+  "hash": "ad08150dea2c20645f13e21bc6be8e181e70caf4e67f197cf4fa03dbc905f94e"
+}
