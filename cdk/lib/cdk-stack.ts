@@ -124,7 +124,7 @@ export class CdkStack extends cdk.Stack {
       bucketName: `${lowerPrefix}-frontend-${this.account}`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       removalPolicy: cdk.RemovalPolicy.RETAIN, // Keep the site files if stack is deleted
-      autoDeleteObjects: true,
+      autoDeleteObjects: false,
     });
 
     // ── CloudFront distribution ───────────────────────────────────────────
