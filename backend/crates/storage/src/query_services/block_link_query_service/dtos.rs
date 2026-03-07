@@ -16,3 +16,15 @@ pub struct AllLinkedBlocksDto {
     pub child_blocks: Vec<LinkedBlockDto>,
     pub related_blocks: Vec<LinkedBlockDto>,
 }
+
+#[derive(sqlx::FromRow, Clone, Debug)]
+pub struct DirectionalLinkExportDto {
+    pub block_from_id: Uuid,
+    pub block_to_id: Uuid,
+}
+
+#[derive(sqlx::FromRow, Clone, Debug)]
+pub struct RelatedLinkExportDto {
+    pub block_a_id: Uuid,
+    pub block_b_id: Uuid,
+}

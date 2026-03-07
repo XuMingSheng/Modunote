@@ -1,5 +1,5 @@
 import { type ComponentType } from "react";
-import { LayoutDashboard, GitBranch, FileText } from "lucide-react";
+import { FileText, GitBranch } from "lucide-react";
 import { type PageId } from "@/App";
 
 import { cn } from "../lib/utils";
@@ -11,9 +11,8 @@ interface Page {
 }
 
 const PAGES: Page[] = [
-  { id: "blocks", icon: LayoutDashboard, label: "Blocks" },
-  { id: "canvases", icon: FileText, label: "Canvases" },
-  { id: "graph", icon: GitBranch, label: "Graph" },
+  { id: "block-editor-page", icon: FileText, label: "Blocks" },
+  { id: "placeholder", icon: GitBranch, label: "Graph" },
 ];
 
 interface FunctionalSidbarProps {
@@ -34,7 +33,7 @@ export const FunctionalSidebar = ({
             onClick={() => onChange(id)}
             className={cn(
               "relative flex items-center justify-center w-10 h-10 rounded-md hover:bg-gray-800 transition-colors",
-              activePageId === id ? "bg-gray-700" : ""
+              activePageId === id ? "bg-gray-700" : "",
             )}
             title={label}
           >

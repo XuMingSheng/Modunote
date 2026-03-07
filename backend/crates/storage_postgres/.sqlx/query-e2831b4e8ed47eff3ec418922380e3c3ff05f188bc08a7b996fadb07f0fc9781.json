@@ -1,6 +1,6 @@
 {
   "db_name": "PostgreSQL",
-  "query": "\n            SELECT\n                brl.id as \"link_id: _\",\n                b.id as \"block_id: _\",\n                b.title,\n                b.created_at,\n                b.updated_at\n            FROM block_related_links brl\n            JOIN blocks b ON (\n                (brl.block_a_id = $1 AND b.id = brl.block_b_id) OR \n                (brl.block_b_id = $1 AND b.id = brl.block_a_id)\n            )\n            WHERE brl.block_a_id = $1 OR brl.block_b_id = $1\n            ",
+  "query": "\n            SELECT\n                brl.id as \"link_id: _\",\n                b.id as \"block_id: _\",\n                b.title,\n                b.created_at,\n                b.updated_at\n            FROM block_related_links brl\n            JOIN blocks b ON (\n                (brl.block_a_id = $1 AND b.id = brl.block_b_id) OR\n                (brl.block_b_id = $1 AND b.id = brl.block_a_id)\n            )\n            WHERE brl.block_a_id = $1 OR brl.block_b_id = $1\n            ",
   "describe": {
     "columns": [
       {
@@ -42,5 +42,5 @@
       false
     ]
   },
-  "hash": "54578feca64daa516ff61465d9a35c83ab6e9710f6d6ca60fe739a48f50cd778"
+  "hash": "e2831b4e8ed47eff3ec418922380e3c3ff05f188bc08a7b996fadb07f0fc9781"
 }

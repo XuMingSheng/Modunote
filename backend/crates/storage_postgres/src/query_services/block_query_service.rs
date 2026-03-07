@@ -5,7 +5,7 @@ use uuid::Uuid;
 
 use storage::query_services::BlockQueryService;
 use storage::query_services::block_query_service::{
-    BlockQueryServiceResult as Result, BlockSummaryDto, OpenedBlockDto,
+    BlockExportDto, BlockQueryServiceResult as Result, BlockSummaryDto, OpenedBlockDto,
 };
 
 struct OpenedBlockModel {
@@ -73,20 +73,38 @@ impl BlockQueryService<Postgres> for PostgresBlockQueryService {
             BlockSummaryDto,
             r#"
             SELECT
-                b.id, 
+                b.id,
                 b.title,
                 b.created_at,
                 b.updated_at,
                 bo.opened_at as "opened_at?"
             FROM blocks b
             LEFT JOIN block_opens bo ON bo.block_id = b.id
-            WHERE 
+            WHERE
                 title LIKE $1 OR
                 content LIKE $1
             ORDER BY updated_at DESC
             LIMIT 50
             "#,
             sql_query_str,
+        )
+        .fetch_all(executor)
+        .await?;
+
+        Ok(blocks)
+    }
+
+    async fn get_all<'e, E>(&self, executor: E) -> Result<Vec<BlockExportDto>>
+    where
+        E: Executor<'e, Database = Postgres>,
+    {
+        let blocks = sqlx::query_as!(
+            BlockExportDto,
+            r#"
+            SELECT id, title, content, created_at, updated_at
+            FROM blocks
+            ORDER BY created_at ASC
+            "#,
         )
         .fetch_all(executor)
         .await?;

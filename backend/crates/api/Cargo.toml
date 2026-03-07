@@ -9,7 +9,7 @@ native = ["storage-sqlite"]
 cloud = ["storage-postgres"]
 
 [dependencies]
-axum = "0.8.4"
+axum = { version = "0.8.4", features = ["multipart"] }
 dotenvy = "0.15"
 cfg-if = "1.0"
 opentelemetry = "0.31"
@@ -28,9 +28,11 @@ utoipa-axum = "0.2"
 
 chrono = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
 thiserror = { workspace = true }
 tracing = {workspace = true}
 uuid  = { workspace = true }
+zip = { version = "2", default-features = false, features = ["deflate"] }
 
 
 domain = { path = "../domain" }

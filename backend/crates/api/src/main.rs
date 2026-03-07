@@ -67,6 +67,8 @@ async fn main() -> Result<()> {
         .merge(features::block_links::routes())
         .merge(features::workspace::routes())
         .merge(features::search::routes())
+        .merge(features::export::routes())
+        .merge(features::import::routes())
         .split_for_parts();
 
     let cors_layer = configure_cors(&config)?;
