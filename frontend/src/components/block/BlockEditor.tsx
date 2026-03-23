@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { AutoSave } from "@/components/shared/AutoSave";
 import { MilkdownEditor } from "../shared/MiikdownEditor";
@@ -23,6 +23,11 @@ export const BlockEditor = () => {
   const loadOpenedBlocks = useAppStore((state) => state.loadOpenedBlocks);
   const setError = useAppStore((state) => state.setError);
 
+  const [activeView, setActiveView] = useState<"visual" | "raw">("visual");
+  const [contentDraft, setContentDraft] = useState(loadedContent ?? "");
+  const [visualReloadToken, setVisualReloadToken] = useState(0);
+  const [contentReadyId, setContentReadyId] = useState<string | null>(null);
+
   const activeBlockRef = useRef<Block | null>(null);
   const autoSaveRef = useRef<any>(null);
 
@@ -41,6 +46,11 @@ export const BlockEditor = () => {
     }
   };
 
+  useEffect(() => {
+    setContentDraft(loadedContent ?? "");
+    setContentReadyId(loadedBlockId ?? null);
+  }, [loadedBlockId, loadedContent]);
+
   if (!loadedBlockId) {
     activeBlockRef.current = null;
 
@@ -51,30 +61,37 @@ export const BlockEditor = () => {
 
   activeBlockRef.current = {
     title: loadedTitle!,
-    content: loadedContent!,
+    content: contentDraft,
   };
   const activeBlock = activeBlockRef.current;
 
   const handleChangeTitle = (title: string) => {
+    activeBlock.title = title;
     autoSaveRef.current?.updateData({
       ...activeBlock,
-      title: title,
     });
-    activeBlock.title = title;
   };
 
   const handleChangeContent = (content: string) => {
+    activeBlock.content = content;
     autoSaveRef.current?.updateData({
       ...activeBlock,
-      content: content,
     });
-    activeBlock.content = content;
+    setContentDraft(content);
+  };
+
+  const handleSetView = (view: "visual" | "raw") => {
+    if (view === activeView) return;
+    if (view === "visual") {
+      setVisualReloadToken((token) => token + 1);
+    }
+    setActiveView(view);
   };
 
   return (
     <div className="flex flex-col h-full">
       {/* Title Section */}
-      <div className="border-b p-4 bg-white flex items-center gap-2">
+      <div className="border-b p-4 bg-white flex items-center gap-3">
         <label className="block text-sm font-medium text-gray-500 mb-1">
           Title
         </label>
@@ -85,6 +102,30 @@ export const BlockEditor = () => {
           className="text-xl font-bold w-full"
           placeholder="Title..."
         />
+        <div className="flex items-center gap-1 rounded-md border border-gray-200 bg-gray-50 p-1 text-xs">
+          <button
+            type="button"
+            onClick={() => handleSetView("visual")}
+            className={`px-2 py-1 rounded ${
+              activeView === "visual"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Visual
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSetView("raw")}
+            className={`px-2 py-1 rounded ${
+              activeView === "raw"
+                ? "bg-white text-gray-900 shadow-sm"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            Markdown
+          </button>
+        </div>
         <AutoSave
           ref={autoSaveRef}
           activeId={loadedBlockId}
@@ -101,13 +142,27 @@ export const BlockEditor = () => {
 
       {/* Content Section */}
       <div className="text-xs text-gray-400 flex-1 overflow-y-auto">
-        <MilkdownEditor
-          id={loadedBlockId}
-          content={loadedContent!}
-          onUpdate={(updatedContent) => {
-            handleChangeContent(updatedContent);
-          }}
-        />
+        {contentReadyId !== loadedBlockId ? (
+          <div className="p-4 text-sm text-gray-400">Loading...</div>
+        ) : activeView === "visual" ? (
+          <MilkdownEditor
+            key={`${loadedBlockId}-${visualReloadToken}`}
+            id={loadedBlockId}
+            content={contentDraft}
+            onUpdate={(updatedContent) => {
+              handleChangeContent(updatedContent);
+            }}
+          />
+        ) : (
+          <textarea
+            key={loadedBlockId}
+            value={contentDraft}
+            onChange={(e) => handleChangeContent(e.target.value)}
+            className="w-full h-full p-4 font-mono text-sm text-gray-900 outline-none resize-none"
+            spellCheck={false}
+            placeholder="Write Markdown..."
+          />
+        )}
       </div>
     </div>
   );

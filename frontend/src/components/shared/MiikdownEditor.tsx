@@ -29,7 +29,7 @@ const CrepeEditor = ({ id, content, onUpdate }: CrepeEditorProps) => {
 
       return crepe;
     },
-    [id, content],
+    [id],
   );
 
   return <Milkdown />;
