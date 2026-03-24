@@ -12,9 +12,9 @@ function AppContent() {
   const setError = useAppStore((state) => state.setError);
 
   return (
-    <div className="flex min-h-screen bg-gray-100">
+    <div className="flex min-h-screen bg-gray-100 overflow-x-hidden">
       <FunctionalSidebar activePageId={pageId} onChange={setPageId} />
-      <main className="flex-1 ml-14 transition-all duration-300">
+      <main className="flex-1 ml-14 min-w-0 transition-all duration-300">
         {pageId === "block-editor-page" && <BlockEditorPage />}
         {pageId === "placeholder" && (
           <div>Placeholder Page (To be implemented)</div>
