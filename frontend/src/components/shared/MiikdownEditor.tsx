@@ -1,4 +1,5 @@
 import { Milkdown, MilkdownProvider, useEditor } from "@milkdown/react";
+import { codeBlockConfig } from "@milkdown/kit/component/code-block";
 import { Crepe } from "@milkdown/crepe";
 
 interface CrepeEditorProps {
@@ -19,6 +20,13 @@ const CrepeEditor = ({ id, content, onUpdate }: CrepeEditorProps) => {
       const crepe = new Crepe({
         root,
         defaultValue: content,
+      });
+
+      crepe.editor.config((ctx) => {
+        ctx.update(codeBlockConfig.key, (prev) => ({
+          ...prev,
+          previewOnlyByDefault: true,
+        }));
       });
 
       crepe.on((api) => {
